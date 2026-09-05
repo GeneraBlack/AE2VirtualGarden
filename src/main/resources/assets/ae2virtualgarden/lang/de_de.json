@@ -1,0 +1,24 @@
+{
+  "itemGroup.ae2virtualgarden": "AE2 Virtual Garden",
+
+  "item.ae2virtualgarden.garden_cell_housing": "Virtuelles Gartenzellen-Gehäuse",
+  "item.ae2virtualgarden.garden_cell_component_1k": "1k Garten-Speicherkomponente",
+  "item.ae2virtualgarden.garden_cell_component_4k": "4k Garten-Speicherkomponente",
+  "item.ae2virtualgarden.garden_cell_component_16k": "16k Garten-Speicherkomponente",
+  "item.ae2virtualgarden.garden_cell_component_64k": "64k Garten-Speicherkomponente",
+  "item.ae2virtualgarden.garden_cell_component_256k": "256k Garten-Speicherkomponente",
+
+  "item.ae2virtualgarden.garden_storage_cell_1k": "1k Virtuelle Gartenzelle",
+  "item.ae2virtualgarden.garden_storage_cell_4k": "4k Virtuelle Gartenzelle",
+  "item.ae2virtualgarden.garden_storage_cell_16k": "16k Virtuelle Gartenzelle",
+  "item.ae2virtualgarden.garden_storage_cell_64k": "64k Virtuelle Gartenzelle",
+  "item.ae2virtualgarden.garden_storage_cell_256k": "256k Virtuelle Gartenzelle",
+
+  "tooltip.ae2virtualgarden.tier": "Stufe: %s",
+  "tooltip.ae2virtualgarden.production": "Erzeugt %s Drops alle %s Sekunden",
+  "tooltip.ae2virtualgarden.configured_plant": "Eingestellte Pflanze: %s",
+  "tooltip.ae2virtualgarden.not_configured": "Keine Pflanze konfiguriert! In die Elementwerkbank (Cell Workbench) mit Samen/Setzling legen.",
+
+  "message.ae2virtualgarden.configured": "Zelle konfiguriert für: %s",
+  "message.ae2virtualgarden.cleared": "Pflanzenkonfiguration gelöscht."
+}

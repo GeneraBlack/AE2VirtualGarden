@@ -1,0 +1,27 @@
+{
+  "type": "ae2virtualgarden:garden_drop",
+  "seed": {
+    "item": "minecraft:golden_apple"
+  },
+  "min_tier": 4,
+  "drops": [
+    {
+      "item": {
+        "id": "minecraft:apple",
+        "count": 1
+      },
+      "weight": 70,
+      "min_count": 1,
+      "max_count": 2
+    },
+    {
+      "item": {
+        "id": "minecraft:gold_nugget",
+        "count": 1
+      },
+      "weight": 30,
+      "min_count": 1,
+      "max_count": 4
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "itemGroup.ae2virtualgarden": "AE2 Virtual Garden",
+
+  "item.ae2virtualgarden.garden_cell_housing": "Virtual Garden Cell Housing",
+  "item.ae2virtualgarden.garden_cell_component_1k": "1k Garden Storage Component",
+  "item.ae2virtualgarden.garden_cell_component_4k": "4k Garden Storage Component",
+  "item.ae2virtualgarden.garden_cell_component_16k": "16k Garden Storage Component",
+  "item.ae2virtualgarden.garden_cell_component_64k": "64k Garden Storage Component",
+  "item.ae2virtualgarden.garden_cell_component_256k": "256k Garden Storage Component",
+
+  "item.ae2virtualgarden.garden_storage_cell_1k": "1k Virtual Garden Storage Cell",
+  "item.ae2virtualgarden.garden_storage_cell_4k": "4k Virtual Garden Storage Cell",
+  "item.ae2virtualgarden.garden_storage_cell_16k": "16k Virtual Garden Storage Cell",
+  "item.ae2virtualgarden.garden_storage_cell_64k": "64k Virtual Garden Storage Cell",
+  "item.ae2virtualgarden.garden_storage_cell_256k": "256k Virtual Garden Storage Cell",
+
+  "tooltip.ae2virtualgarden.tier": "Tier: %s",
+  "tooltip.ae2virtualgarden.production": "Produces %s drops every %s seconds",
+  "tooltip.ae2virtualgarden.configured_plant": "Configured Plant: %s",
+  "tooltip.ae2virtualgarden.not_configured": "No plant configured! Place in Cell Workbench with a sapling or seed.",
+
+  "message.ae2virtualgarden.configured": "Configured cell for: %s",
+  "message.ae2virtualgarden.cleared": "Cleared cell plant configuration."
+}
