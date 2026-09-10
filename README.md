@@ -3,11 +3,11 @@
 <div align="center">
   <img src="logo.png" alt="AE2 Virtual Garden Logo" width="200" height="200" />
 
-  **Virtual Botany inside your ME Network for Minecraft 1.21.1 (NeoForge)**
+  **Virtual Botany inside your ME Network for Minecraft 26.1.2 (NeoForge)**
 
-  [![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen.svg)](https://minecraft.net/)
-  [![NeoForge](https://img.shields.io/badge/NeoForge-21.1.x-orange.svg)](https://neoforged.net/)
-  [![Applied Energistics 2](https://img.shields.io/badge/Applied%20Energistics%202-19.2.x-blue.svg)](https://appliedenergistics.org/)
+  [![Minecraft](https://img.shields.io/badge/Minecraft-26.1.2-brightgreen.svg)](https://minecraft.net/)
+  [![NeoForge](https://img.shields.io/badge/NeoForge-26.1.2-orange.svg)](https://neoforged.net/)
+  [![Applied Energistics 2](https://img.shields.io/badge/Applied%20Energistics%202-26.1.11--beta-blue.svg)](https://appliedenergistics.org/)
   [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 </div>
 
@@ -15,7 +15,7 @@
 
 ## 🌿 About
 
-**AE2 Virtual Garden** is an official-style addon for **Applied Energistics 2** on **Minecraft 1.21.1 (NeoForge)**. It bridges digital ME network storage and automated botany by introducing generative **Virtual Garden Storage Cells**.
+**AE2 Virtual Garden** is an official-style addon for **Applied Energistics 2** on **Minecraft 26.1.2 (NeoForge)**. It bridges digital ME network storage and automated botany by introducing generative **Virtual Garden Storage Cells**.
 
 Insert a configured Garden Cell into any standard **ME Drive** or **ME Chest**, supply AE power, and watch it generate real plant crops, wood logs, saplings, apples, seeds, and botany drops directly into the cell every 3 seconds (60 ticks)!
 
@@ -143,9 +143,9 @@ You can add custom drops or override existing drop tables using datapack JSON fi
 
 ## 📦 Requirements
 
-- **Minecraft:** `1.21.1`
-- **NeoForge:** `21.1.172+`
-- **Applied Energistics 2:** `19.2.10+`
+- **Minecraft:** `26.1.2`
+- **NeoForge:** `26.1.2.108+`
+- **Applied Energistics 2:** `26.1.11-beta+`
 
 ---
 
@@ -153,14 +153,14 @@ You can add custom drops or override existing drop tables using datapack JSON fi
 
 1. Clone repository:
    ```bash
-   git clone https://github.com/your-username/AE2VirtualGarden.git
+   git clone https://github.com/GeneraBlack/AE2VirtualGarden.git
    cd AE2VirtualGarden
    ```
 2. Build with Gradle:
    ```bash
    ./gradlew build
    ```
-3. The built JAR file will be located in `build/libs/ae2virtualgarden-1.0.0.jar`.
+3. The built JAR file will be located in `build/libs/ae2virtualgarden-1.1.0.jar`.
 
 ---
 

@@ -4,7 +4,7 @@ import de.project.ae2virtualgarden.cell.GardenCellTier;
 import de.project.ae2virtualgarden.registry.ModRecipes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.util.RandomSource;
@@ -222,9 +222,9 @@ public class GardenDropRegistry {
         if (BUILTIN_DROPS.containsKey(item) || DYNAMIC_CACHE.containsKey(item)) {
             return true;
         }
-        if (level != null) {
+        if (level instanceof ServerLevel serverLevel) {
             SingleRecipeInput input = new SingleRecipeInput(new ItemStack(item));
-            if (level.getRecipeManager().getRecipeFor(ModRecipes.GARDEN_DROP_TYPE.get(), input, level).isPresent()) {
+            if (serverLevel.recipeAccess().getRecipeFor(ModRecipes.GARDEN_DROP_TYPE.get(), input, serverLevel).isPresent()) {
                 return true;
             }
         }
@@ -239,7 +239,7 @@ public class GardenDropRegistry {
         if (stack.is(ItemTags.SAPLINGS)) {
             return true;
         }
-        ResourceLocation id = BuiltInRegistries.ITEM.getKey(item);
+        Identifier id = BuiltInRegistries.ITEM.getKey(item);
         String path = id.getPath();
         return path.endsWith("_seeds") || path.endsWith("_seed") || path.endsWith("_sapling");
     }
@@ -249,10 +249,10 @@ public class GardenDropRegistry {
             return BUILTIN_DROPS.get(seed);
         }
 
-        if (level != null) {
+        if (level instanceof ServerLevel serverLevel) {
             SingleRecipeInput input = new SingleRecipeInput(new ItemStack(seed));
             Optional<RecipeHolder<GardenDropRecipe>> recipe =
-                    level.getRecipeManager().getRecipeFor(ModRecipes.GARDEN_DROP_TYPE.get(), input, level);
+                    serverLevel.recipeAccess().getRecipeFor(ModRecipes.GARDEN_DROP_TYPE.get(), input, serverLevel);
             if (recipe.isPresent()) {
                 return recipe.get().value().drops();
             }
@@ -297,19 +297,19 @@ public class GardenDropRegistry {
             // 2. Modded Sapling: lookup corresponding log, leaves, stick
             ItemStack stack = new ItemStack(seed);
             if (block instanceof SaplingBlock || stack.is(ItemTags.SAPLINGS)) {
-                ResourceLocation id = BuiltInRegistries.ITEM.getKey(seed);
+                Identifier id = BuiltInRegistries.ITEM.getKey(seed);
                 String path = id.getPath();
                 String base = path.replace("_sapling", "");
 
-                ResourceLocation logId = ResourceLocation.fromNamespaceAndPath(id.getNamespace(), base + "_log");
-                ResourceLocation stemId = ResourceLocation.fromNamespaceAndPath(id.getNamespace(), base + "_stem");
-                ResourceLocation leavesId = ResourceLocation.fromNamespaceAndPath(id.getNamespace(), base + "_leaves");
+                Identifier logId = Identifier.fromNamespaceAndPath(id.getNamespace(), base + "_log");
+                Identifier stemId = Identifier.fromNamespaceAndPath(id.getNamespace(), base + "_stem");
+                Identifier leavesId = Identifier.fromNamespaceAndPath(id.getNamespace(), base + "_leaves");
 
-                Item logItem = BuiltInRegistries.ITEM.get(logId);
+                Item logItem = BuiltInRegistries.ITEM.getValue(logId);
                 if (logItem.equals(Items.AIR)) {
-                    logItem = BuiltInRegistries.ITEM.get(stemId);
+                    logItem = BuiltInRegistries.ITEM.getValue(stemId);
                 }
-                Item leavesItem = BuiltInRegistries.ITEM.get(leavesId);
+                Item leavesItem = BuiltInRegistries.ITEM.getValue(leavesId);
 
                 if (!logItem.equals(Items.AIR)) {
                     entries.add(new GardenDropEntry(new ItemStack(logItem), 65, 1, 1));
@@ -339,12 +339,12 @@ public class GardenDropRegistry {
         }
 
         // 4. Modded seed without BlockItem: pattern match name (e.g. mod:cotton_seeds -> mod:cotton)
-        ResourceLocation id = BuiltInRegistries.ITEM.getKey(seed);
+        Identifier id = BuiltInRegistries.ITEM.getKey(seed);
         String path = id.getPath();
         if (path.endsWith("_seeds") || path.endsWith("_seed")) {
             String cropPath = path.replaceAll("_seeds?$", "");
-            ResourceLocation cropId = ResourceLocation.fromNamespaceAndPath(id.getNamespace(), cropPath);
-            Item cropItem = BuiltInRegistries.ITEM.get(cropId);
+            Identifier cropId = Identifier.fromNamespaceAndPath(id.getNamespace(), cropPath);
+            Item cropItem = BuiltInRegistries.ITEM.getValue(cropId);
             if (!cropItem.equals(Items.AIR)) {
                 entries.add(new GardenDropEntry(new ItemStack(cropItem), 65, 1, 2));
                 entries.add(new GardenDropEntry(new ItemStack(seed), 35, 1, 2));

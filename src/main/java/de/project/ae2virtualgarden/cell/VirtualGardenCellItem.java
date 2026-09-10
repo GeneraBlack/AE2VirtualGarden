@@ -21,15 +21,17 @@ import de.project.ae2virtualgarden.recipe.GardenDropRegistry;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.Level;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 public class VirtualGardenCellItem extends Item implements ICellWorkbenchItem {
 
@@ -81,25 +83,25 @@ public class VirtualGardenCellItem extends Item implements ICellWorkbenchItem {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> lines, TooltipFlag flag) {
-        super.appendHoverText(stack, context, lines, flag);
+    public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltipAdder, TooltipFlag flag) {
+        super.appendHoverText(stack, context, display, tooltipAdder, flag);
 
         StorageCell cell = StorageCells.getCellInventory(stack, null);
         if (cell instanceof VirtualGardenCellInventory gardenInv) {
-            lines.add(Tooltips.bytesUsed(gardenInv.getUsedBytes(), gardenInv.getTotalBytes()));
-            lines.add(Tooltips.typesUsed(gardenInv.getStoredItemTypes(), gardenInv.getTotalItemTypes()));
+            tooltipAdder.accept(Tooltips.bytesUsed(gardenInv.getUsedBytes(), gardenInv.getTotalBytes()));
+            tooltipAdder.accept(Tooltips.typesUsed(gardenInv.getStoredItemTypes(), gardenInv.getTotalItemTypes()));
         } else {
-            lines.add(Tooltips.bytesUsed(0, tier.getTotalBytes()));
-            lines.add(Tooltips.typesUsed(0, tier.getTotalTypes()));
+            tooltipAdder.accept(Tooltips.bytesUsed(0, tier.getTotalBytes()));
+            tooltipAdder.accept(Tooltips.typesUsed(0, tier.getTotalTypes()));
         }
 
         int drops = tier.getDropCount();
         int intervalTicks = VirtualGardenConfig.BASE_TICK_INTERVAL.get();
         double seconds = intervalTicks / 20.0;
 
-        lines.add(Component.translatable("tooltip.ae2virtualgarden.tier", tier.getTierName())
+        tooltipAdder.accept(Component.translatable("tooltip.ae2virtualgarden.tier", tier.getTierName())
                 .withStyle(ChatFormatting.AQUA));
-        lines.add(Component.translatable("tooltip.ae2virtualgarden.production", drops, String.format(Locale.ROOT, "%.1f", seconds))
+        tooltipAdder.accept(Component.translatable("tooltip.ae2virtualgarden.production", drops, String.format(Locale.ROOT, "%.1f", seconds))
                 .withStyle(ChatFormatting.GRAY));
 
         List<GenericStack> config = stack.get(AEComponents.STORAGE_CELL_CONFIG_INV);
@@ -114,11 +116,11 @@ public class VirtualGardenCellItem extends Item implements ICellWorkbenchItem {
         }
 
         if (configuredItem != null) {
-            lines.add(Component.translatable("tooltip.ae2virtualgarden.configured_plant",
+            tooltipAdder.accept(Component.translatable("tooltip.ae2virtualgarden.configured_plant",
                             Component.translatable(configuredItem.getDescriptionId()))
                     .withStyle(ChatFormatting.GREEN));
         } else {
-            lines.add(Component.translatable("tooltip.ae2virtualgarden.not_configured")
+            tooltipAdder.accept(Component.translatable("tooltip.ae2virtualgarden.not_configured")
                     .withStyle(ChatFormatting.YELLOW));
         }
     }
@@ -166,7 +168,7 @@ public class VirtualGardenCellItem extends Item implements ICellWorkbenchItem {
     }
 
     @Override
-    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+    public InteractionResult use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         InteractionHand otherHand = hand == InteractionHand.MAIN_HAND ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
         ItemStack otherStack = player.getItemInHand(otherHand);
@@ -178,19 +180,19 @@ public class VirtualGardenCellItem extends Item implements ICellWorkbenchItem {
                     if (!level.isClientSide()) {
                         AEItemKey key = AEItemKey.of(otherStack.getItem());
                         stack.set(AEComponents.STORAGE_CELL_CONFIG_INV, List.of(new GenericStack(key, 1)));
-                        player.displayClientMessage(Component.translatable("message.ae2virtualgarden.configured",
-                                Component.translatable(otherStack.getItem().getDescriptionId())).withStyle(ChatFormatting.GREEN), true);
+                        player.sendOverlayMessage(Component.translatable("message.ae2virtualgarden.configured",
+                                Component.translatable(otherStack.getItem().getDescriptionId())).withStyle(ChatFormatting.GREEN));
                     }
-                    return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
+                    return InteractionResult.SUCCESS;
                 }
             } else {
                 // Clear configuration
                 if (!level.isClientSide()) {
                     stack.remove(AEComponents.STORAGE_CELL_CONFIG_INV);
-                    player.displayClientMessage(Component.translatable("message.ae2virtualgarden.cleared")
-                            .withStyle(ChatFormatting.RED), true);
+                    player.sendOverlayMessage(Component.translatable("message.ae2virtualgarden.cleared")
+                            .withStyle(ChatFormatting.RED));
                 }
-                return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
+                return InteractionResult.SUCCESS;
             }
         }
 
