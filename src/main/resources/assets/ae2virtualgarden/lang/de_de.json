@@ -18,7 +18,6 @@
   "tooltip.ae2virtualgarden.production": "Erzeugt %s Drops alle %s Sekunden",
   "tooltip.ae2virtualgarden.configured_plant": "Eingestellte Pflanze: %s",
   "tooltip.ae2virtualgarden.not_configured": "Keine Pflanze konfiguriert! In die Elementwerkbank (Cell Workbench) mit Samen/Setzling legen.",
-  "tooltip.ae2virtualgarden.tier_too_low": "Benötigt eine %s Zelle oder höher zum Wachsen!",
 
   "message.ae2virtualgarden.configured": "Zelle konfiguriert für: %s",
   "message.ae2virtualgarden.cleared": "Pflanzenkonfiguration gelöscht."
