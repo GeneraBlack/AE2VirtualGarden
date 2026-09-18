@@ -1,0 +1,124 @@
+﻿# ==============================================================================
+# AE2 Virtual Garden - Example Configuration File for Modpack Creators
+# ==============================================================================
+# Location in Modpacks:
+#   - Pre-configured defaults for new worlds:  defaultconfigs/ae2virtualgarden-common.toml
+#   - Active instance config:                 config/ae2virtualgarden-common.toml
+#
+# Tip: If distributing inside a modpack, placing this file in 'defaultconfigs/'
+#      ensures each newly generated world inherits your customized balance!
+# ==============================================================================
+
+# General Virtual Garden Settings
+[general]
+
+	# Interval in world ticks between crop/tree drop generation cycles.
+	# Standard Minecraft runs at 20 ticks per second (20 tps).
+	#   - 20 ticks  = 1.0 second  (Very fast / Skyblock)
+	#   - 60 ticks  = 3.0 seconds (Default / Balanced)
+	#   - 120 ticks = 6.0 seconds (Slower / Hardcore)
+	#   - 600 ticks = 30.0 seconds (Slow farming simulation)
+	# Range: 1 ~ 72000
+	# Default: 60
+	baseTickInterval = 60
+
+	# Whether generating drops requires AE energy from the ME Network.
+	# If set to true, cells will check the ME network for sufficient power before each drop.
+	# If the network runs out of power, generation pauses automatically.
+	# If set to false, drops are generated for free without consuming AE power.
+	# Default: true
+	requireAeEnergy = true
+
+	# AE energy consumed per generated item drop.
+	# This is an active cost billed only when an item drop is successfully produced
+	# and accepted into the cell's storage.
+	#
+	# Examples of total power per generation cycle:
+	#   - At 10.0 AE/drop:
+	#       * 1k Cell   (1 drop)   = 10 AE / cycle
+	#       * 4k Cell   (4 drops)  = 40 AE / cycle
+	#       * 16k Cell  (16 drops) = 160 AE / cycle
+	#       * 64k Cell  (64 drops) = 640 AE / cycle
+	#       * 256k Cell (256 drops)= 2,560 AE / cycle
+	#
+	# Note: When a cell is full (types or bytes limit reached), generation pauses
+	# and ZERO energy is drained.
+	# Range: 0.0 ~ 100000.0
+	# Default: 10.0
+	energyPerDrop = 10.0
+
+
+# Tier Drop Amounts
+# Defines how many item drop rolls are performed during each generation cycle
+# for each tier of Virtual Garden Storage Cell.
+[tiers]
+
+	# Number of drops per cycle for 1k Virtual Garden Storage Cell
+	# Range: 1 ~ 64
+	# Default: 1
+	tier1kDrops = 1
+
+	# Number of drops per cycle for 4k Virtual Garden Storage Cell
+	# Range: 1 ~ 256
+	# Default: 4
+	tier4kDrops = 4
+
+	# Number of drops per cycle for 16k Virtual Garden Storage Cell
+	# Range: 1 ~ 1024
+	# Default: 16
+	tier16kDrops = 16
+
+	# Number of drops per cycle for 64k Virtual Garden Storage Cell
+	# Range: 1 ~ 4096
+	# Default: 64
+	tier64kDrops = 64
+
+	# Number of drops per cycle for 256k Virtual Garden Storage Cell
+	# Range: 1 ~ 16384
+	# Default: 256
+	tier256kDrops = 256
+
+
+# ==============================================================================
+# MODPACK PRESETS (Copy & Paste the values above to apply a preset)
+# ==============================================================================
+#
+# PRESET 1: "Casual / High Yield / Skyblock"
+#   Ideal for skyblocks or resource-generation packs:
+#   [general]
+#     baseTickInterval = 20      # Generates drops every 1 second!
+#     requireAeEnergy = true
+#     energyPerDrop = 5.0        # Cheap power cost
+#   [tiers]
+#     tier1kDrops = 2
+#     tier4kDrops = 8
+#     tier16kDrops = 32
+#     tier64kDrops = 128
+#     tier256kDrops = 512
+#
+# PRESET 2: "Hardcore / High Tech / Heavy Power"
+#   Ideal for expert / greg-style / tech-heavy progression packs:
+#   [general]
+#     baseTickInterval = 100     # Generates drops every 5 seconds
+#     requireAeEnergy = true
+#     energyPerDrop = 50.0       # Requires substantial power infrastructure
+#   [tiers]
+#     tier1kDrops = 1
+#     tier4kDrops = 2
+#     tier16kDrops = 8
+#     tier64kDrops = 32
+#     tier256kDrops = 128
+#
+# PRESET 3: "Free Energy / Creative / Sandbox"
+#   No energy needed, standard rates:
+#   [general]
+#     baseTickInterval = 60
+#     requireAeEnergy = false
+#     energyPerDrop = 0.0
+#   [tiers]
+#     tier1kDrops = 1
+#     tier4kDrops = 4
+#     tier16kDrops = 16
+#     tier64kDrops = 64
+#     tier256kDrops = 256
+# ==============================================================================

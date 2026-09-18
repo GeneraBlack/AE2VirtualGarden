@@ -1,0 +1,36 @@
+﻿{
+  "type": "ae2virtualgarden:garden_drop",
+  "seed": {
+    "item": "minecraft:flowering_azalea"
+  },
+  "min_tier": 2,
+  "drops": [
+    {
+      "item": {
+        "id": "minecraft:oak_log",
+        "count": 1
+      },
+      "weight": 60,
+      "min_count": 1,
+      "max_count": 1
+    },
+    {
+      "item": {
+        "id": "minecraft:azalea_leaves",
+        "count": 1
+      },
+      "weight": 25,
+      "min_count": 1,
+      "max_count": 2
+    },
+    {
+      "item": {
+        "id": "minecraft:flowering_azalea",
+        "count": 1
+      },
+      "weight": 15,
+      "min_count": 1,
+      "max_count": 1
+    }
+  ]
+}
