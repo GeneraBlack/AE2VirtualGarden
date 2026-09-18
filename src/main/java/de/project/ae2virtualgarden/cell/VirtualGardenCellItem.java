@@ -119,6 +119,13 @@ public class VirtualGardenCellItem extends Item implements ICellWorkbenchItem {
             tooltipAdder.accept(Component.translatable("tooltip.ae2virtualgarden.configured_plant",
                             Component.translatable(configuredItem.getDescriptionId()))
                     .withStyle(ChatFormatting.GREEN));
+
+            java.util.Optional<de.project.ae2virtualgarden.recipe.GardenDropRecipe> recipe = GardenDropRegistry.getRecipe(configuredItem, null);
+            if (recipe.isPresent() && tier.getTierLevel() < recipe.get().minTier()) {
+                tooltipAdder.accept(Component.translatable("tooltip.ae2virtualgarden.tier_too_low",
+                                GardenCellTier.fromLevel(recipe.get().minTier()).getTierName())
+                        .withStyle(ChatFormatting.RED));
+            }
         } else {
             tooltipAdder.accept(Component.translatable("tooltip.ae2virtualgarden.not_configured")
                     .withStyle(ChatFormatting.YELLOW));

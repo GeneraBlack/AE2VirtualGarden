@@ -89,7 +89,13 @@ public class VirtualGardenGridService implements IGridServiceProvider, IVirtualG
             return false;
         }
 
-        List<GardenDropEntry> dropEntries = GardenDropRegistry.getDropEntries(seed, level);
+        java.util.Optional<de.project.ae2virtualgarden.recipe.GardenDropRecipe> recipe = GardenDropRegistry.getRecipe(seed, level);
+        if (recipe.isPresent() && gardenCell.getTier().getTierLevel() < recipe.get().minTier()) {
+            return false;
+        }
+
+        List<GardenDropEntry> dropEntries = recipe.map(de.project.ae2virtualgarden.recipe.GardenDropRecipe::drops)
+                .orElseGet(() -> GardenDropRegistry.getDropEntries(seed, level));
         if (dropEntries.isEmpty()) {
             return false;
         }

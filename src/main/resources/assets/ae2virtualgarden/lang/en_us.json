@@ -18,6 +18,7 @@
   "tooltip.ae2virtualgarden.production": "Produces %s drops every %s seconds",
   "tooltip.ae2virtualgarden.configured_plant": "Configured Plant: %s",
   "tooltip.ae2virtualgarden.not_configured": "No plant configured! Place in Cell Workbench with a sapling or seed.",
+  "tooltip.ae2virtualgarden.tier_too_low": "Requires %s Cell or higher to grow!",
 
   "message.ae2virtualgarden.configured": "Configured cell for: %s",
   "message.ae2virtualgarden.cleared": "Cleared cell plant configuration."

@@ -52,4 +52,13 @@ public enum GardenCellTier {
             case TIER_256K -> VirtualGardenConfig.TIER_256K_DROPS.get();
         };
     }
+
+    public int getTierLevel() {
+        return ordinal() + 1; // 1 = 1k, 2 = 4k, 3 = 16k, 4 = 64k, 5 = 256k
+    }
+
+    public static GardenCellTier fromLevel(int level) {
+        int idx = Math.max(0, Math.min(values().length - 1, level - 1));
+        return values()[idx];
+    }
 }

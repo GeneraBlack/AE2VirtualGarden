@@ -5,8 +5,10 @@ import de.project.ae2virtualgarden.registry.ModRecipes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.ItemTags;
+import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -218,15 +220,35 @@ public class GardenDropRegistry {
         BUILTIN_DROPS.put(seed, drops);
     }
 
+    public static Optional<GardenDropRecipe> getRecipe(Item seed, Level level) {
+        if (level instanceof ServerLevel serverLevel) {
+            SingleRecipeInput input = new SingleRecipeInput(new ItemStack(seed));
+            Optional<RecipeHolder<GardenDropRecipe>> recipe =
+                    serverLevel.recipeAccess().getRecipeFor(ModRecipes.GARDEN_DROP_TYPE.get(), input, serverLevel);
+            if (recipe.isPresent()) {
+                return Optional.of(recipe.get().value());
+            }
+        } else {
+            MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+            if (server != null) {
+                SingleRecipeInput input = new SingleRecipeInput(new ItemStack(seed));
+                Optional<RecipeHolder<GardenDropRecipe>> recipe =
+                        server.getRecipeManager().getRecipeFor(ModRecipes.GARDEN_DROP_TYPE.get(), input, server.overworld());
+                if (recipe.isPresent()) {
+                    return Optional.of(recipe.get().value());
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
     public static boolean isValidSeed(Item item, Level level) {
-        if (BUILTIN_DROPS.containsKey(item) || DYNAMIC_CACHE.containsKey(item)) {
+        // 1. If a custom datapack recipe exists for this item, it is always valid
+        if (getRecipe(item, level).isPresent()) {
             return true;
         }
-        if (level instanceof ServerLevel serverLevel) {
-            SingleRecipeInput input = new SingleRecipeInput(new ItemStack(item));
-            if (serverLevel.recipeAccess().getRecipeFor(ModRecipes.GARDEN_DROP_TYPE.get(), input, serverLevel).isPresent()) {
-                return true;
-            }
+        if (BUILTIN_DROPS.containsKey(item) || DYNAMIC_CACHE.containsKey(item)) {
+            return true;
         }
         // Auto-detect crops, saplings, and bonemealable blocks
         if (item instanceof BlockItem blockItem) {
@@ -245,24 +267,34 @@ public class GardenDropRegistry {
     }
 
     public static List<GardenDropEntry> getDropEntries(Item seed, Level level) {
+        // 1. Custom datapack recipes take highest precedence (allows modpacks to override built-in defaults)
+        Optional<GardenDropRecipe> customRecipe = getRecipe(seed, level);
+        if (customRecipe.isPresent()) {
+            return customRecipe.get().drops();
+        }
+
+        // 2. Built-in defaults (Vanilla trees, crops, fungi)
         if (BUILTIN_DROPS.containsKey(seed)) {
             return BUILTIN_DROPS.get(seed);
         }
 
-        if (level instanceof ServerLevel serverLevel) {
-            SingleRecipeInput input = new SingleRecipeInput(new ItemStack(seed));
-            Optional<RecipeHolder<GardenDropRecipe>> recipe =
-                    serverLevel.recipeAccess().getRecipeFor(ModRecipes.GARDEN_DROP_TYPE.get(), input, serverLevel);
-            if (recipe.isPresent()) {
-                return recipe.get().value().drops();
-            }
-        }
-
+        // 3. Dynamic cache
         if (DYNAMIC_CACHE.containsKey(seed)) {
             return DYNAMIC_CACHE.get(seed);
         }
 
-        if (level instanceof ServerLevel serverLevel) {
+        // 4. Auto-discover from block / sapling / crop
+        ServerLevel serverLevel = null;
+        if (level instanceof ServerLevel sl) {
+            serverLevel = sl;
+        } else {
+            MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+            if (server != null) {
+                serverLevel = server.overworld();
+            }
+        }
+
+        if (serverLevel != null) {
             List<GardenDropEntry> discovered = autoDiscoverDrops(seed, serverLevel);
             if (discovered != null && !discovered.isEmpty()) {
                 DYNAMIC_CACHE.put(seed, discovered);
