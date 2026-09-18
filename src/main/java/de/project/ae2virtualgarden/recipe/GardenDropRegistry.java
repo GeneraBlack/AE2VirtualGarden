@@ -245,10 +245,6 @@ public class GardenDropRegistry {
     }
 
     public static List<GardenDropEntry> getDropEntries(Item seed, Level level) {
-        if (BUILTIN_DROPS.containsKey(seed)) {
-            return BUILTIN_DROPS.get(seed);
-        }
-
         if (level != null) {
             SingleRecipeInput input = new SingleRecipeInput(new ItemStack(seed));
             Optional<RecipeHolder<GardenDropRecipe>> recipe =
@@ -256,6 +252,10 @@ public class GardenDropRegistry {
             if (recipe.isPresent()) {
                 return recipe.get().value().drops();
             }
+        }
+
+        if (BUILTIN_DROPS.containsKey(seed)) {
+            return BUILTIN_DROPS.get(seed);
         }
 
         if (DYNAMIC_CACHE.containsKey(seed)) {

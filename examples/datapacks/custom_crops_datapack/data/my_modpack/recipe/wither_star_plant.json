@@ -1,0 +1,36 @@
+﻿{
+  "type": "ae2virtualgarden:garden_drop",
+  "seed": {
+    "item": "minecraft:nether_star"
+  },
+  "min_tier": 5,
+  "drops": [
+    {
+      "item": {
+        "id": "minecraft:nether_star",
+        "count": 1
+      },
+      "weight": 20,
+      "min_count": 1,
+      "max_count": 1
+    },
+    {
+      "item": {
+        "id": "minecraft:wither_skeleton_skull",
+        "count": 1
+      },
+      "weight": 50,
+      "min_count": 1,
+      "max_count": 2
+    },
+    {
+      "item": {
+        "id": "minecraft:soul_sand",
+        "count": 4
+      },
+      "weight": 30,
+      "min_count": 2,
+      "max_count": 4
+    }
+  ]
+}
