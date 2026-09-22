@@ -8,6 +8,8 @@ public class VirtualGardenConfig {
     public static final ModConfigSpec.IntValue BASE_TICK_INTERVAL;
     public static final ModConfigSpec.DoubleValue ENERGY_PER_DROP;
     public static final ModConfigSpec.BooleanValue REQUIRE_AE_ENERGY;
+    public static final ModConfigSpec.BooleanValue ENABLE_DYNAMIC_FALLBACK;
+    public static final ModConfigSpec.BooleanValue ENFORCE_INVENTORY_CHECK;
 
     public static final ModConfigSpec.IntValue TIER_1K_DROPS;
     public static final ModConfigSpec.IntValue TIER_4K_DROPS;
@@ -31,6 +33,14 @@ public class VirtualGardenConfig {
         ENERGY_PER_DROP = builder
                 .comment("AE energy consumed per generated item drop")
                 .defineInRange("energyPerDrop", 10.0, 0.0, 100000.0);
+
+        ENABLE_DYNAMIC_FALLBACK = builder
+                .comment("Whether to automatically discover drops for unknown mod crops, saplings, and mushrooms matching plant tags/classes. If false, only built-in drops and registered datapack recipes are allowed.")
+                .define("enableDynamicFallback", true);
+
+        ENFORCE_INVENTORY_CHECK = builder
+                .comment("When true, players can only configure/partition a cell to an item if they currently possess it in their inventory (prevents dragging unowned items from JEI/REI/EMI).")
+                .define("enforceInventoryCheck", false);
 
         builder.pop();
 

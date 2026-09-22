@@ -69,7 +69,72 @@ public class VirtualGardenCellItem extends Item implements ICellWorkbenchItem {
 
     @Override
     public ConfigInventory getConfigInventory(ItemStack stack) {
-        return CellConfig.create(Set.of(AEKeyType.items()), stack);
+        var holder = new Holder(stack);
+        holder.inv = ConfigInventory.configTypes(63)
+                .supportedTypes(AEKeyType.items())
+                .slotFilter((slot, what) -> {
+                    if (!(what instanceof AEItemKey itemKey)) {
+                        return false;
+                    }
+                    Item item = itemKey.getItem();
+                    if (!GardenDropRegistry.isValidSeed(item, null)) {
+                        return false;
+                    }
+                    if (VirtualGardenConfig.ENFORCE_INVENTORY_CHECK.get()) {
+                        return playerHasItem(stack, item);
+                    }
+                    return true;
+                })
+                .changeListener(holder::save)
+                .build();
+        holder.load();
+        return holder.inv;
+    }
+
+    private static class Holder {
+        private final ItemStack stack;
+        private ConfigInventory inv;
+
+        public Holder(ItemStack stack) {
+            this.stack = stack;
+        }
+
+        public void load() {
+            inv.readFromList(stack.getOrDefault(AEComponents.STORAGE_CELL_CONFIG_INV, List.of()));
+        }
+
+        public void save() {
+            stack.set(AEComponents.STORAGE_CELL_CONFIG_INV, inv.toList());
+        }
+    }
+
+    private static boolean playerHasItem(ItemStack cellStack, Item item) {
+        var server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+        if (server != null) {
+            for (var player : server.getPlayerList().getPlayers()) {
+                if (player.containerMenu instanceof appeng.menu.implementations.CellWorkbenchMenu menu) {
+                    if (ItemStack.isSameItemSameComponents(menu.getWorkbenchItem(), cellStack)) {
+                        return player.getInventory().contains(new ItemStack(item));
+                    }
+                }
+            }
+        }
+
+        if (appeng.util.Platform.isClient()) {
+            return ClientInventoryCheck.hasItem(item);
+        }
+
+        return false;
+    }
+
+    private static class ClientInventoryCheck {
+        static boolean hasItem(Item item) {
+            var mc = net.minecraft.client.Minecraft.getInstance();
+            if (mc.player != null) {
+                return mc.player.getInventory().contains(new ItemStack(item));
+            }
+            return false;
+        }
     }
 
     @Override

@@ -85,7 +85,7 @@ public class VirtualGardenGridService implements IGridServiceProvider, IVirtualG
         }
 
         Item seed = gardenCell.getConfiguredSeedOrSapling();
-        if (seed == null) {
+        if (seed == null || !GardenDropRegistry.isValidSeed(seed, level)) {
             return false;
         }
 
