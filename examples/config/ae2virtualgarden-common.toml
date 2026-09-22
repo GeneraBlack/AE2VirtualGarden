@@ -1,4 +1,4 @@
-﻿# ==============================================================================
+# ==============================================================================
 # AE2 Virtual Garden - Example Configuration File for Modpack Creators
 # ==============================================================================
 # Location in Modpacks:
@@ -46,6 +46,18 @@
 	# Range: 0.0 ~ 100000.0
 	# Default: 10.0
 	energyPerDrop = 10.0
+
+	# Whether to automatically discover drops for unknown mod crops, saplings, and mushrooms
+	# that match valid plant tags (#c:crops, #c:seeds, #c:saplings, #c:mushrooms) or CropBlock classes.
+	# If set to false, automatic discovery is completely disabled. Only hardcoded built-in drops
+	# and custom datapack recipes (ae2virtualgarden:garden_drop) will be allowed to generate.
+	# Default: true
+	enableDynamicFallback = true
+
+	# Whether players must actually have the target item in their inventory to configure/partition
+	# a cell (prevents dragging unowned ghost items from JEI/REI/EMI into the cell workbench).
+	# Default: false
+	enforceInventoryCheck = false
 
 
 # Tier Drop Amounts

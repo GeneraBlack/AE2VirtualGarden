@@ -1,12 +1,15 @@
 package de.project.ae2virtualgarden.recipe;
 
 import de.project.ae2virtualgarden.cell.GardenCellTier;
+import de.project.ae2virtualgarden.config.VirtualGardenConfig;
 import de.project.ae2virtualgarden.registry.ModRecipes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.ItemTags;
+import net.minecraft.tags.TagKey;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -16,14 +19,19 @@ import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.SingleRecipeInput;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.BonemealableBlock;
 import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.level.block.SaplingBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 public class GardenDropRegistry {
+
+    public static final TagKey<Item> CROPS_TAG = TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("c", "crops"));
+    public static final TagKey<Item> SEEDS_TAG = TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("c", "seeds"));
+    public static final TagKey<Item> SAPLINGS_TAG = TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("c", "saplings"));
+    public static final TagKey<Item> MUSHROOMS_TAG = TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("c", "mushrooms"));
 
     private static final Map<Item, List<GardenDropEntry>> BUILTIN_DROPS = new HashMap<>();
     private static final Map<Item, List<GardenDropEntry>> DYNAMIC_CACHE = new HashMap<>();
@@ -218,33 +226,55 @@ public class GardenDropRegistry {
         BUILTIN_DROPS.put(seed, drops);
     }
 
-    public static boolean isValidSeed(Item item, Level level) {
+    public static boolean isValidSeed(Item item, @Nullable Level level) {
+        if (item == null || item.equals(Items.AIR)) {
+            return false;
+        }
+
+        // 1. Built-in defaults
         if (BUILTIN_DROPS.containsKey(item) || DYNAMIC_CACHE.containsKey(item)) {
             return true;
         }
+
+        // 2. Datapack recipes
         if (level != null) {
             SingleRecipeInput input = new SingleRecipeInput(new ItemStack(item));
             if (level.getRecipeManager().getRecipeFor(ModRecipes.GARDEN_DROP_TYPE.get(), input, level).isPresent()) {
                 return true;
             }
         }
-        // Auto-detect crops, saplings, and bonemealable blocks
+
+        // 3. If dynamic fallback is disabled, only built-in drops and custom datapack recipes are valid
+        if (!VirtualGardenConfig.ENABLE_DYNAMIC_FALLBACK.get()) {
+            return false;
+        }
+
+        // 4. Conventional Tags check
+        ItemStack stack = new ItemStack(item);
+        if (stack.is(CROPS_TAG) || stack.is(SEEDS_TAG) || stack.is(SAPLINGS_TAG) || stack.is(ItemTags.SAPLINGS) || stack.is(MUSHROOMS_TAG)) {
+            return true;
+        }
+
+        // 5. Block classes (strictly CropBlock or SaplingBlock, NO loose BonemealableBlock!)
         if (item instanceof BlockItem blockItem) {
             Block block = blockItem.getBlock();
-            if (block instanceof CropBlock || block instanceof SaplingBlock || block instanceof BonemealableBlock) {
+            if (block instanceof CropBlock || block instanceof SaplingBlock) {
                 return true;
             }
         }
-        ItemStack stack = new ItemStack(item);
-        if (stack.is(ItemTags.SAPLINGS)) {
-            return true;
-        }
+
+        // 6. Seed/sapling naming convention
         ResourceLocation id = BuiltInRegistries.ITEM.getKey(item);
         String path = id.getPath();
         return path.endsWith("_seeds") || path.endsWith("_seed") || path.endsWith("_sapling");
     }
 
     public static List<GardenDropEntry> getDropEntries(Item seed, Level level) {
+        if (seed == null || seed.equals(Items.AIR)) {
+            return Collections.emptyList();
+        }
+
+        // 1. Custom Datapack Recipe
         if (level != null) {
             SingleRecipeInput input = new SingleRecipeInput(new ItemStack(seed));
             Optional<RecipeHolder<GardenDropRecipe>> recipe =
@@ -254,12 +284,19 @@ public class GardenDropRegistry {
             }
         }
 
+        // 2. Built-in defaults
         if (BUILTIN_DROPS.containsKey(seed)) {
             return BUILTIN_DROPS.get(seed);
         }
 
+        // 3. Dynamic Cache
         if (DYNAMIC_CACHE.containsKey(seed)) {
             return DYNAMIC_CACHE.get(seed);
+        }
+
+        // 4. Dynamic Fallback: only if enabled AND strictly valid
+        if (!VirtualGardenConfig.ENABLE_DYNAMIC_FALLBACK.get() || !isValidSeed(seed, level)) {
+            return Collections.emptyList();
         }
 
         if (level instanceof ServerLevel serverLevel) {
@@ -321,18 +358,6 @@ public class GardenDropRegistry {
                 entries.add(new GardenDropEntry(new ItemStack(Items.STICK), 10, 1, 2));
 
                 if (!entries.isEmpty()) {
-                    return entries;
-                }
-            }
-
-            // 3. Other Bonemealable blocks
-            if (block instanceof BonemealableBlock) {
-                List<ItemStack> blockDrops = Block.getDrops(block.defaultBlockState(), serverLevel, BlockPos.ZERO, null);
-                if (blockDrops != null && !blockDrops.isEmpty()) {
-                    for (ItemStack drop : blockDrops) {
-                        if (drop.isEmpty()) continue;
-                        entries.add(new GardenDropEntry(drop.copy(), 100, 1, Math.max(1, drop.getCount())));
-                    }
                     return entries;
                 }
             }
