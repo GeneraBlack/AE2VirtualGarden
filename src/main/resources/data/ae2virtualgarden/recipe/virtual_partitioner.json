@@ -13,14 +13,18 @@
     },
     "S": {
       "item": "minecraft:smooth_stone"
+    },
+    "H": {
+      "item": "minecraft:iron_hoe"
     }
   },
   "pattern": [
     "ICI",
-    "RSR",
+    "RHR",
     "SIS"
   ],
   "result": {
+    "count": 1,
     "id": "ae2virtualgarden:virtual_partitioner"
   }
 }

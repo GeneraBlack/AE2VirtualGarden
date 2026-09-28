@@ -85,6 +85,13 @@ public class AE2VirtualGarden {
                 appeng.api.upgrades.Upgrades.add(AEItems.SPEED_CARD.asItem(), cell.get(), 4);
                 appeng.api.upgrades.Upgrades.add(ModItems.VOID_SECONDARY_CARD.get(), cell.get(), 1);
                 appeng.api.upgrades.Upgrades.add(AEItems.VOID_CARD.asItem(), cell.get(), 1);
+                for (String ns : List.of("ae2virtualmine", "ae2virtualbattle", "ae2virtualwell")) {
+                    net.minecraft.resources.ResourceLocation loc = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(ns, "void_secondary_card");
+                    if (net.minecraft.core.registries.BuiltInRegistries.ITEM.containsKey(loc)) {
+                        net.minecraft.world.item.Item sisterCard = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(loc);
+                        appeng.api.upgrades.Upgrades.add(sisterCard, cell.get(), 1);
+                    }
+                }
             }
         });
     }
