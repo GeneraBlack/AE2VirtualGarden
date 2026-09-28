@@ -10,23 +10,31 @@ import appeng.api.networking.energy.IEnergyService;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.storage.cells.CellState;
 import appeng.api.storage.cells.StorageCell;
+import appeng.api.upgrades.IUpgradeInventory;
+import appeng.api.upgrades.UpgradeInventories;
+import appeng.core.definitions.AEItems;
 import de.project.ae2virtualgarden.cell.IVirtualGardenCell;
+import de.project.ae2virtualgarden.cell.partition.GardenCellPartition;
+import de.project.ae2virtualgarden.cell.partition.GardenCellPartitionList;
 import de.project.ae2virtualgarden.config.VirtualGardenConfig;
 import de.project.ae2virtualgarden.recipe.GardenDropEntry;
 import de.project.ae2virtualgarden.recipe.GardenDropRegistry;
+import de.project.ae2virtualgarden.registry.ModItems;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class VirtualGardenGridService implements IGridServiceProvider, IVirtualGardenGridService {
 
     private final IGrid grid;
     private int tickCounter = 0;
+    private final Map<Integer, Integer> cellProgress = new HashMap<>();
 
     public VirtualGardenGridService(IGrid grid) {
         this.grid = grid;
@@ -39,11 +47,9 @@ public class VirtualGardenGridService implements IGridServiceProvider, IVirtualG
         }
 
         tickCounter++;
-        int interval = VirtualGardenConfig.BASE_TICK_INTERVAL.get();
-        if (tickCounter < interval) {
+        if (tickCounter % 5 != 0) {
             return;
         }
-        tickCounter = 0;
 
         IEnergyService energyService = grid.getEnergyService();
         boolean requireEnergy = VirtualGardenConfig.REQUIRE_AE_ENERGY.get();
@@ -67,7 +73,7 @@ public class VirtualGardenGridService implements IGridServiceProvider, IVirtualG
                 for (int i = 0; i < drive.getCellCount(); i++) {
                     StorageCell cell = drive.getOriginalCellInventory(i);
                     if (cell instanceof IVirtualGardenCell gardenCell) {
-                        altered |= processCell(gardenCell, level, energyService, requireEnergy, random);
+                        altered |= tickCell(gardenCell, level, energyService, requireEnergy, random);
                     }
                 }
             }
@@ -78,19 +84,38 @@ public class VirtualGardenGridService implements IGridServiceProvider, IVirtualG
         }
     }
 
-    private boolean processCell(IVirtualGardenCell gardenCell, Level level, IEnergyService energyService, boolean requireEnergy, RandomSource random) {
-        // 1. If cell is full, stop immediately and do not generate or consume power
+    private boolean tickCell(IVirtualGardenCell gardenCell, Level level, IEnergyService energyService, boolean requireEnergy, RandomSource random) {
+        IUpgradeInventory upgrades = UpgradeInventories.forItem(gardenCell.getItemStack(), 5);
+        int speedCards = Math.min(4, upgrades.getInstalledUpgrades(AEItems.SPEED_CARD.asItem()));
+        int baseInterval = VirtualGardenConfig.BASE_TICK_INTERVAL.get();
+
+        int targetInterval = switch (speedCards) {
+            case 1 -> (int) (baseInterval * 0.70);
+            case 2 -> (int) (baseInterval * 0.45);
+            case 3 -> (int) (baseInterval * 0.30);
+            case 4 -> Math.max(10, (int) (baseInterval * 0.20));
+            default -> baseInterval;
+        };
+
+        int cellKey = System.identityHashCode(gardenCell.getItemStack());
+        int progress = cellProgress.getOrDefault(cellKey, 0) + 5;
+        if (progress >= targetInterval) {
+            cellProgress.put(cellKey, 0);
+            return processCell(gardenCell, level, energyService, requireEnergy, random, speedCards, upgrades);
+        } else {
+            cellProgress.put(cellKey, progress);
+            return false;
+        }
+    }
+
+    private boolean processCell(IVirtualGardenCell gardenCell, Level level, IEnergyService energyService, boolean requireEnergy, RandomSource random, int speedCards, IUpgradeInventory upgrades) {
+        // 1. If whole cell is full, stop immediately
         if (gardenCell.isFull() || gardenCell.getStatus() == CellState.FULL) {
             return false;
         }
 
-        Item seed = gardenCell.getConfiguredSeedOrSapling();
-        if (seed == null || !GardenDropRegistry.isValidSeed(seed, level)) {
-            return false;
-        }
-
-        List<GardenDropEntry> dropEntries = GardenDropRegistry.getDropEntries(seed, level);
-        if (dropEntries.isEmpty()) {
+        GardenCellPartitionList partitionList = gardenCell.getPartitions();
+        if (partitionList.isEmpty()) {
             return false;
         }
 
@@ -99,46 +124,94 @@ public class VirtualGardenGridService implements IGridServiceProvider, IVirtualG
             return false;
         }
 
-        double energyPerDrop = VirtualGardenConfig.ENERGY_PER_DROP.get();
+        double baseEnergy = VirtualGardenConfig.ENERGY_PER_DROP.get();
+        double energyMultiplier = Math.pow(1.5, speedCards);
+        double energyPerDrop = baseEnergy * energyMultiplier;
         boolean anyInserted = false;
 
+        boolean globalVoidSecondary = upgrades.isInstalled(ModItems.VOID_SECONDARY_CARD.get())
+                || upgrades.isInstalled(AEItems.VOID_CARD.asItem());
+
         for (int c = 0; c < dropCycles; c++) {
-            // Check if cell has become full during the cycle
             if (gardenCell.isFull() || gardenCell.getStatus() == CellState.FULL) {
-                break; // Stop generating, cell is full!
-            }
-
-            ItemStack dropStack = GardenDropRegistry.rollDrop(dropEntries, random);
-            if (dropStack.isEmpty()) {
-                continue;
-            }
-
-            AEItemKey key = AEItemKey.of(dropStack);
-
-            // Test if the cell has space to accept this item
-            long canInsert = gardenCell.injectGeneratedDrop(key, dropStack.getCount(), Actionable.SIMULATE);
-            if (canInsert <= 0) {
-                // Cell is full or cannot accept this drop, stop immediately
                 break;
             }
 
+            // Weighted selection across partitions (0 to 99)
+            int roll = random.nextInt(100);
+            int cumulative = 0;
+            GardenCellPartition selectedPartition = null;
+
+            for (GardenCellPartition p : partitionList.partitions()) {
+                cumulative += p.percent();
+                if (roll < cumulative) {
+                    selectedPartition = p;
+                    break;
+                }
+            }
+
+            // If roll falls into unallocated space (or no partition selected), cycle is idle
+            if (selectedPartition == null) {
+                continue;
+            }
+
+            // If this specific partition has reached its capacity, skip it (other partitions can still produce!)
+            if (gardenCell.isPartitionFull(selectedPartition)) {
+                continue;
+            }
+
+            Item target = selectedPartition.target();
+            if (target == null || !GardenDropRegistry.isValidSeed(target, level)) {
+                continue;
+            }
+
+            List<GardenDropEntry> dropEntries = GardenDropRegistry.getDropEntries(target, level, gardenCell.getTier());
+            if (dropEntries.isEmpty()) {
+                continue;
+            }
+
+            // BUG-05 FIX: Use rollDropWithIndex to correctly identify secondary drops by index
+            GardenDropRegistry.RolledDrop rolledDrop = GardenDropRegistry.rollDropWithIndex(dropEntries, random);
+            if (rolledDrop.stack().isEmpty()) {
+                continue;
+            }
+
+            boolean voidThisSecondary = globalVoidSecondary || selectedPartition.voidSecondary();
+
+            // A drop is secondary if its entry index > 0 (not the primary drop)
+            if (voidThisSecondary && rolledDrop.isSecondary()) {
+                // Secondary output is voided — still costs energy
+                if (requireEnergy && energyPerDrop > 0) {
+                    energyService.extractAEPower(energyPerDrop, Actionable.MODULATE, PowerMultiplier.CONFIG);
+                }
+                continue;
+            }
+
+            AEItemKey key = AEItemKey.of(rolledDrop.stack());
+            int dropCount = rolledDrop.stack().getCount();
+
+            // Test if the cell has space to accept this item
+            long canInsert = gardenCell.injectGeneratedDrop(key, dropCount, Actionable.SIMULATE);
+            if (canInsert <= 0) {
+                continue;
+            }
+
+            // BUG-08 FIX: Scale energy proportionally to actual insertion amount
+            double scaledEnergy = (canInsert < dropCount) ? energyPerDrop * ((double) canInsert / dropCount) : energyPerDrop;
+
             // Only consume AE power if the item actually fits into the cell
-            if (requireEnergy && energyPerDrop > 0) {
-                double extracted = energyService.extractAEPower(energyPerDrop, Actionable.SIMULATE, PowerMultiplier.CONFIG);
-                if (extracted < energyPerDrop) {
+            if (requireEnergy && scaledEnergy > 0) {
+                double extracted = energyService.extractAEPower(scaledEnergy, Actionable.SIMULATE, PowerMultiplier.CONFIG);
+                if (extracted < scaledEnergy) {
                     break; // Network ran out of power
                 }
-                energyService.extractAEPower(energyPerDrop, Actionable.MODULATE, PowerMultiplier.CONFIG);
+                energyService.extractAEPower(scaledEnergy, Actionable.MODULATE, PowerMultiplier.CONFIG);
             }
 
             long inserted = gardenCell.injectGeneratedDrop(key, canInsert, Actionable.MODULATE);
             if (inserted > 0) {
                 anyInserted = true;
             }
-        }
-
-        if (anyInserted) {
-            gardenCell.persist();
         }
 
         return anyInserted;

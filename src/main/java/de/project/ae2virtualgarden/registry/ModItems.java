@@ -37,5 +37,13 @@ public class ModItems {
             ITEMS.registerItem("garden_storage_cell_64k", props -> new VirtualGardenCellItem(GardenCellTier.TIER_64K, props));
     public static final DeferredItem<VirtualGardenCellItem> GARDEN_CELL_256K =
             ITEMS.registerItem("garden_storage_cell_256k", props -> new VirtualGardenCellItem(GardenCellTier.TIER_256K, props));
+
+    // Upgrade Cards
+    public static final DeferredItem<Item> VOID_SECONDARY_CARD =
+            ITEMS.registerItem("void_secondary_card", appeng.api.upgrades.Upgrades::createUpgradeCardItem);
+
+    // Blocks
+    public static final DeferredItem<net.minecraft.world.item.BlockItem> VIRTUAL_PARTITIONER =
+            ITEMS.registerSimpleBlockItem(ModBlocks.VIRTUAL_PARTITIONER);
 }
 

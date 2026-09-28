@@ -1,6 +1,10 @@
 {
   "itemGroup.ae2virtualgarden": "AE2 Virtual Garden",
 
+  "block.ae2virtualgarden.virtual_partitioner": "Virtual Partitioner",
+  "gui.ae2virtualgarden.virtual_partitioner": "Virtual Partitioner",
+  "item.ae2virtualgarden.void_secondary_card": "Void Secondary Output Card",
+
   "item.ae2virtualgarden.garden_cell_housing": "Virtual Garden Cell Housing",
   "item.ae2virtualgarden.garden_cell_component_1k": "1k Garden Storage Component",
   "item.ae2virtualgarden.garden_cell_component_4k": "4k Garden Storage Component",
@@ -16,9 +20,13 @@
 
   "tooltip.ae2virtualgarden.tier": "Tier: %s",
   "tooltip.ae2virtualgarden.production": "Produces %s drops every %s seconds",
+  "tooltip.ae2virtualgarden.production_speed": "Produces %s drops every %s seconds (%s Acceleration Cards)",
   "tooltip.ae2virtualgarden.configured_plant": "Configured Plant: %s",
-  "tooltip.ae2virtualgarden.not_configured": "No plant configured! Place in Cell Workbench with a sapling or seed.",
+  "tooltip.ae2virtualgarden.void_secondary_active": "◆ Void Secondary Outputs: Active",
+  "tooltip.ae2virtualgarden.partitions_header": "Partitions (%s):",
+  "tooltip.ae2virtualgarden.not_configured": "No plant configured! Place in Virtual Partitioner or Cell Workbench.",
 
   "message.ae2virtualgarden.configured": "Configured cell for: %s",
-  "message.ae2virtualgarden.cleared": "Cleared cell plant configuration."
+  "message.ae2virtualgarden.cleared": "Cleared cell plant configuration.",
+  "message.ae2virtualgarden.clear_blocked": "Cannot clear configuration while cell contains items! Empty cell first."
 }
