@@ -1,5 +1,7 @@
 package de.project.ae2virtualgarden.block;
 
+import de.project.ae2virtualgarden.util.VirtualCellAdapter;
+
 import de.project.ae2virtualgarden.menu.VirtualPartitionerMenu;
 import de.project.ae2virtualgarden.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
@@ -109,6 +111,6 @@ public class VirtualPartitionerBlockEntity extends BlockEntity implements MenuPr
 
     @Override
     public boolean canPlaceItem(int slot, ItemStack stack) {
-        return slot == 0 && stack.getItem() instanceof de.project.ae2virtualgarden.cell.VirtualGardenCellItem;
+        return slot == 0 && VirtualCellAdapter.isVirtualStorageCell(stack);
     }
 }
