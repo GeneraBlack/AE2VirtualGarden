@@ -240,25 +240,42 @@ public class VirtualGardenCellInventory implements IVirtualGardenCell {
             return 0;
         }
 
-        Item configuredSeed = getConfiguredSeedOrSapling();
-        if (configuredSeed == null) {
-            return 0;
-        }
-
         if (!(what instanceof AEItemKey itemKey)) {
             return 0;
         }
 
         Item item = itemKey.getItem();
         boolean allowed = false;
-        if (item.equals(configuredSeed)) {
-            allowed = true;
-        } else {
-            List<GardenDropEntry> drops = GardenDropRegistry.getDropEntries(configuredSeed, null);
-            for (GardenDropEntry entry : drops) {
-                if (entry.item().is(item)) {
+
+        var partitions = getPartitions();
+        if (!partitions.isEmpty()) {
+            for (var p : partitions.partitions()) {
+                if (item.equals(p.target())) {
                     allowed = true;
                     break;
+                }
+                List<GardenDropEntry> drops = GardenDropRegistry.getDropEntries(p.target(), null, tier);
+                for (GardenDropEntry entry : drops) {
+                    if (entry.item().is(item)) {
+                        allowed = true;
+                        break;
+                    }
+                }
+                if (allowed) break;
+            }
+        } else {
+            Item configuredSeed = getConfiguredSeedOrSapling();
+            if (configuredSeed != null) {
+                if (item.equals(configuredSeed)) {
+                    allowed = true;
+                } else {
+                    List<GardenDropEntry> drops = GardenDropRegistry.getDropEntries(configuredSeed, null, tier);
+                    for (GardenDropEntry entry : drops) {
+                        if (entry.item().is(item)) {
+                            allowed = true;
+                            break;
+                        }
+                    }
                 }
             }
         }
@@ -301,5 +318,25 @@ public class VirtualGardenCellInventory implements IVirtualGardenCell {
     @Override
     public Component getDescription() {
         return stack.getHoverName();
+    }
+
+    @Override
+    public long getStoredCountForTarget(Item target) {
+        if (target == null || this.storedAmounts.isEmpty()) {
+            return 0;
+        }
+        long count = 0;
+        List<GardenDropEntry> drops = GardenDropRegistry.getDropEntries(target, null, tier);
+        java.util.Set<Item> items = new java.util.HashSet<>();
+        items.add(target);
+        for (GardenDropEntry drop : drops) {
+            items.add(drop.item().getItem());
+        }
+        for (var entry : Object2LongMaps.fastIterable(this.storedAmounts)) {
+            if (entry.getKey() instanceof AEItemKey itemKey && items.contains(itemKey.getItem())) {
+                count += entry.getLongValue();
+            }
+        }
+        return count;
     }
 }
