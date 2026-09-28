@@ -19,7 +19,6 @@ import de.project.ae2virtualgarden.cell.partition.GardenCellPartitionList;
 import de.project.ae2virtualgarden.config.VirtualGardenConfig;
 import de.project.ae2virtualgarden.recipe.GardenDropEntry;
 import de.project.ae2virtualgarden.recipe.GardenDropRegistry;
-import de.project.ae2virtualgarden.registry.ModItems;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -173,7 +172,7 @@ public class VirtualGardenGridService implements IGridServiceProvider, IVirtualG
                 continue;
             }
 
-            boolean voidThisSecondary = globalVoidSecondary || selectedPartition.voidSecondary();
+            boolean voidThisSecondary = globalVoidSecondary && selectedPartition.voidSecondary();
 
             // A drop is secondary if its entry index > 0 (not the primary drop)
             if (voidThisSecondary && rolledDrop.isSecondary()) {

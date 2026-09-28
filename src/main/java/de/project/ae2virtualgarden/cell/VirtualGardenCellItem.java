@@ -20,7 +20,6 @@ import appeng.util.ConfigInventory;
 import de.project.ae2virtualgarden.config.VirtualGardenConfig;
 import de.project.ae2virtualgarden.recipe.GardenDropRegistry;
 import de.project.ae2virtualgarden.registry.ModDataComponents;
-import de.project.ae2virtualgarden.registry.ModItems;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
@@ -106,6 +105,8 @@ public class VirtualGardenCellItem extends Item implements ICellWorkbenchItem {
 
         public void save() {
             stack.set(AEComponents.STORAGE_CELL_CONFIG_INV, inv.toList());
+        
+            stack.remove(de.project.ae2virtualgarden.registry.ModDataComponents.PARTITIONS.get());
         }
     }
 
