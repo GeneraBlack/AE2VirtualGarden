@@ -187,8 +187,7 @@ public class VirtualGardenCellItem extends Item implements ICellWorkbenchItem {
                     .withStyle(ChatFormatting.GRAY));
         }
 
-        boolean hasVoidSecondary = upgrades.isInstalled(ModItems.VOID_SECONDARY_CARD.get())
-                || upgrades.isInstalled(AEItems.VOID_CARD.asItem());
+        boolean hasVoidSecondary = de.project.ae2virtualgarden.util.VirtualCellAdapter.hasVoidSecondaryCard(upgrades);
         if (hasVoidSecondary) {
             tooltipAdder.accept(Component.translatable("tooltip.ae2virtualgarden.void_secondary_active")
                     .withStyle(ChatFormatting.DARK_PURPLE));

@@ -1,27 +1,24 @@
 package de.project.ae2virtualgarden.client.gui;
 
-import appeng.api.upgrades.UpgradeInventories;
-import appeng.core.definitions.AEItems;
-import de.project.ae2virtualgarden.cell.VirtualGardenCellItem;
-import de.project.ae2virtualgarden.cell.partition.GardenCellPartition;
-import de.project.ae2virtualgarden.cell.partition.GardenCellPartitionList;
 import de.project.ae2virtualgarden.menu.VirtualPartitionerMenu;
 import de.project.ae2virtualgarden.network.SetPartitionsPayload;
-import de.project.ae2virtualgarden.recipe.GardenDropRegistry;
-import de.project.ae2virtualgarden.registry.ModDataComponents;
-import de.project.ae2virtualgarden.registry.ModItems;
+import de.project.ae2virtualgarden.util.VirtualCellAdapter;
+import de.project.ae2virtualgarden.util.VirtualCellAdapter.UniversalPartition;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.TextAlignment;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.material.Fluid;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 
 import java.util.ArrayList;
@@ -39,12 +36,14 @@ public class VirtualPartitionerScreen extends AbstractContainerScreen<VirtualPar
     };
 
     public static class PartitionDraft {
-        public Item target;
+        public Identifier targetId;
+        public boolean isFluid;
         public int percent;
         public boolean voidSecondary;
 
-        public PartitionDraft(Item target, int percent, boolean voidSecondary) {
-            this.target = target;
+        public PartitionDraft(Identifier targetId, boolean isFluid, int percent, boolean voidSecondary) {
+            this.targetId = targetId;
+            this.isFluid = isFluid;
             this.percent = percent;
             this.voidSecondary = voidSecondary;
         }
@@ -86,12 +85,10 @@ public class VirtualPartitionerScreen extends AbstractContainerScreen<VirtualPar
             scrollOffset = 0;
             dirty = false;
 
-            if (!currentCell.isEmpty() && currentCell.getItem() instanceof VirtualGardenCellItem) {
-                GardenCellPartitionList list = currentCell.get(ModDataComponents.PARTITIONS.get());
-                if (list != null && !list.isEmpty()) {
-                    for (GardenCellPartition p : list.partitions()) {
-                        workingList.add(new PartitionDraft(p.target(), p.percent(), p.voidSecondary()));
-                    }
+            if (!currentCell.isEmpty() && VirtualCellAdapter.isVirtualStorageCell(currentCell)) {
+                List<UniversalPartition> list = VirtualCellAdapter.readPartitions(currentCell);
+                for (UniversalPartition p : list) {
+                    workingList.add(new PartitionDraft(p.targetId(), p.isFluid(), p.percent(), p.voidSecondary()));
                 }
             }
         }
@@ -121,11 +118,10 @@ public class VirtualPartitionerScreen extends AbstractContainerScreen<VirtualPar
         int x = this.leftPos;
         int y = this.topPos;
 
-        // Window Background (GParted dark workstation theme)
+        // Window Background
         extractor.fill(x, y, x + imageWidth, y + imageHeight, 0xFF1E1E1E);
-        // Bevel borders
         extractor.fill(x, y, x + imageWidth, y + 1, 0xFF4A4A4A);
-        extractor.fill(x, y, x + 1, y + imageHeight, 0xFF4A4A4A);
+        extractor.fill(x, y + 1, x + 1, y + imageHeight, 0xFF4A4A4A);
         extractor.fill(x, y + imageHeight - 1, x + imageWidth, y + imageHeight, 0xFF0D0D0D);
         extractor.fill(x + imageWidth - 1, y, x + imageWidth, y + imageHeight, 0xFF0D0D0D);
 
@@ -135,19 +131,14 @@ public class VirtualPartitionerScreen extends AbstractContainerScreen<VirtualPar
         // Cell slot background (x=16, y=20)
         drawSlotBox(extractor, x + 15, y + 19);
 
-        // Upgrades header label (x=52, y=10)
-        extractor.textRenderer().accept(x + 52, y + 10, Component.literal("Upgrades").withColor(0xFF888888));
-        for (int i = 0; i < 4; i++) {
-            drawSlotBox(extractor, x + 51 + i * 18, y + 19);
-        }
-
         // Drive Info Header
         ItemStack cell = menu.getSlot(0).getItem();
-        if (!cell.isEmpty() && cell.getItem() instanceof VirtualGardenCellItem virtualCell) {
-            String tierName = virtualCell.getTier().getTierName() + " Virtual Drive";
+        boolean hasCell = !cell.isEmpty() && VirtualCellAdapter.isVirtualStorageCell(cell);
+        if (hasCell) {
+            String tierName = VirtualCellAdapter.getCellTierName(cell) + " Virtual Drive";
             extractor.textRenderer().accept(x + 115, y + 21, Component.literal(tierName).withColor(0xFF55FF55));
 
-            long totalBytes = virtualCell.getTier().getTotalBytes();
+            long totalBytes = VirtualCellAdapter.getCellTotalBytes(cell);
             String stats = String.format("Capacity: %,d B | Allocated: %d%%", totalBytes, getTotalPercent());
             extractor.textRenderer().accept(x + 115, y + 30, Component.literal(stats).withColor(0xFFAAAAAA));
         } else {
@@ -161,10 +152,9 @@ public class VirtualPartitionerScreen extends AbstractContainerScreen<VirtualPar
         int barW = 196;
         int barH = 14;
 
-        // Bar border
         extractor.fill(barX - 1, barY - 1, barX + barW + 1, barY + barH + 1, 0xFF0A0A0A);
 
-        if (cell.isEmpty() || !(cell.getItem() instanceof VirtualGardenCellItem)) {
+        if (!hasCell) {
             extractor.fill(barX, barY, barX + barW, barY + barH, 0xFF2A2A2A);
             extractor.textRenderer().accept(TextAlignment.CENTER, barX + barW / 2, barY + 3,
                     Component.literal("NO DISK DETECTED").withColor(0xFF555555));
@@ -197,15 +187,13 @@ public class VirtualPartitionerScreen extends AbstractContainerScreen<VirtualPar
         extractor.fill(tableX, tableY, tableX + tableW, tableY + tableH, 0xFF141414);
         extractor.fill(tableX, tableY, tableX + tableW, tableY + 1, 0xFF282828);
 
-        // Table header labels
         extractor.textRenderer().accept(tableX + 22, tableY + 3, Component.literal("Target").withColor(0xFF888888));
         extractor.textRenderer().accept(tableX + 104, tableY + 3, Component.literal("Alloc").withColor(0xFF888888));
         extractor.textRenderer().accept(tableX + 144, tableY + 3, Component.literal("Void").withColor(0xFF888888));
 
-        // Partition Rows (up to 3 visible rows, height = 20)
         int maxVisible = 3;
         if (workingList.isEmpty()) {
-            if (!cell.isEmpty()) {
+            if (hasCell) {
                 extractor.textRenderer().accept(TextAlignment.CENTER, tableX + tableW / 2, tableY + 32,
                         Component.literal("No partitions. Click '+ Add' below.").withColor(0xFF666666));
             }
@@ -230,11 +218,12 @@ public class VirtualPartitionerScreen extends AbstractContainerScreen<VirtualPar
                 extractor.fill(boxX - 1, boxY - 1, boxX + 17, boxY + 17, boxColor);
                 extractor.fill(boxX, boxY, boxX + 16, boxY + 16, 0xFF222222);
 
-                if (p.target != null) {
-                    extractor.item(new ItemStack(p.target), boxX, boxY);
+                ItemStack renderStack = VirtualCellAdapter.getTargetRenderStack(p.targetId, p.isFluid);
+                if (!renderStack.isEmpty()) {
+                    extractor.item(renderStack, boxX, boxY);
                 }
 
-                String name = (p.target != null) ? new ItemStack(p.target).getHoverName().getString() : "[Select]";
+                String name = VirtualCellAdapter.getTargetDisplayName(p.targetId, p.isFluid).getString();
                 if (font.width(name) > 52) {
                     name = font.plainSubstrByWidth(name, 48) + "..";
                 }
@@ -253,7 +242,7 @@ public class VirtualPartitionerScreen extends AbstractContainerScreen<VirtualPar
                 int voidText = canVoid ? (p.voidSecondary ? 0xFFFFFFFF : 0xFF777777) : 0xFF444444;
                 drawButtonWithCustomBg(extractor, tableX + 138, rowY + 3, 26, 11, "Void", voidText, voidBg);
 
-                drawButton(extractor, tableX + 170, rowY + 3, 11, 11, "×", 0xFFFF5555);
+                drawButton(extractor, tableX + 170, rowY + 3, 11, 11, "x", 0xFFFF5555);
             }
         }
 
@@ -264,7 +253,6 @@ public class VirtualPartitionerScreen extends AbstractContainerScreen<VirtualPar
 
         // Action Buttons Row (y=138)
         int btnY = y + 137;
-        boolean hasCell = !cell.isEmpty() && cell.getItem() instanceof VirtualGardenCellItem;
         int addColor = (hasCell && workingList.size() < 6 && getUnallocatedPercent() > 0) ? 0xFFFFFFFF : 0xFF666666;
         drawButton(extractor, x + 12, btnY, 36, 14, "+ Add", addColor);
 
@@ -326,68 +314,81 @@ public class VirtualPartitionerScreen extends AbstractContainerScreen<VirtualPar
     }
 
     private void drawVoidSlotBox(GuiGraphicsExtractor extractor, int sx, int sy) {
-        extractor.fill(sx, sy, sx + 18, sy + 18, 0xFF5A189A);
-        extractor.fill(sx + 1, sy + 1, sx + 17, sy + 17, 0xFF8B8B8B);
-        extractor.fill(sx + 1, sy + 1, sx + 16, sy + 16, 0xFF373737);
-        extractor.fill(sx + 1, sy + 1, sx + 17, sy + 2, 0xFF373737);
-        extractor.fill(sx + 1, sy + 1, sx + 2, sy + 17, 0xFF373737);
-        extractor.fill(sx + 1, sy + 1, sx + 17, sy + 17, 0xFF1A1A1A);
+        extractor.fill(sx, sy, sx + 18, sy + 18, 0xFF4A148C);
+        extractor.fill(sx + 1, sy + 1, sx + 17, sy + 17, 0xFF7B1FA2);
+        extractor.fill(sx + 1, sy + 1, sx + 16, sy + 16, 0xFF4A148C);
+        extractor.fill(sx + 1, sy + 1, sx + 17, sy + 2, 0xFF4A148C);
+        extractor.fill(sx + 1, sy + 1, sx + 2, sy + 17, 0xFF4A148C);
+        extractor.fill(sx + 1, sy + 1, sx + 17, sy + 17, 0xFF1A0A2A);
     }
 
-    private void drawButton(GuiGraphicsExtractor extractor, int bx, int by, int bw, int bh, String label, int textColor) {
-        drawButtonWithCustomBg(extractor, bx, by, bw, bh, label, textColor, 0xFF2C2C2C);
-    }
-
-    private void drawButtonWithCustomBg(GuiGraphicsExtractor extractor, int bx, int by, int bw, int bh, String label, int textColor, int bgColor) {
-        extractor.fill(bx, by, bx + bw, by + bh, 0xFF141414);
-        extractor.fill(bx + 1, by + 1, bx + bw - 1, by + bh - 1, 0xFF4A4A4A);
-        extractor.fill(bx + 1, by + 1, bx + bw - 1, by + bh - 1, bgColor);
+    private void drawButton(GuiGraphicsExtractor extractor, int bx, int by, int bw, int bh, String text, int textColor) {
+        extractor.fill(bx, by, bx + bw, by + bh, 0xFF2C2C2C);
+        extractor.fill(bx, by, bx + bw, by + 1, 0xFF3D3D3D);
+        extractor.fill(bx, by, bx + 1, by + bh, 0xFF3D3D3D);
+        extractor.fill(bx, by + bh - 1, bx + bw, by + bh, 0xFF1A1A1A);
+        extractor.fill(bx + bw - 1, by, bx + bw, by + bh, 0xFF1A1A1A);
         extractor.textRenderer().accept(TextAlignment.CENTER, bx + bw / 2, by + (bh - 8) / 2,
-                Component.literal(label).withColor(textColor));
+                Component.literal(text).withColor(textColor));
+    }
+
+    private void drawButtonWithCustomBg(GuiGraphicsExtractor extractor, int bx, int by, int bw, int bh, String text, int textColor, int bgColor) {
+        extractor.fill(bx, by, bx + bw, by + bh, bgColor);
+        extractor.fill(bx, by, bx + bw, by + 1, 0xFF4A4A4A);
+        extractor.fill(bx, by, bx + 1, by + bh, 0xFF4A4A4A);
+        extractor.fill(bx, by + bh - 1, bx + bw, by + bh, 0xFF0D0D0D);
+        extractor.fill(bx + bw - 1, by, bx + bw, by + bh, 0xFF0D0D0D);
+        extractor.textRenderer().accept(TextAlignment.CENTER, bx + bw / 2, by + (bh - 8) / 2,
+                Component.literal(text).withColor(textColor));
     }
 
     private void renderCustomTooltips(GuiGraphicsExtractor extractor, int mouseX, int mouseY) {
         int x = this.leftPos;
         int y = this.topPos;
 
+        ItemStack cell = menu.getSlot(0).getItem();
+        boolean hasCell = !cell.isEmpty() && VirtualCellAdapter.isVirtualStorageCell(cell);
+        boolean isFluid = hasCell && VirtualCellAdapter.isFluidCell(cell);
+
+        // Bar tooltips
         int barX = x + 12;
         int barY = y + 42;
         int barW = 196;
         int barH = 14;
 
-        ItemStack cell = menu.getSlot(0).getItem();
-        if (!cell.isEmpty() && cell.getItem() instanceof VirtualGardenCellItem virtualCell) {
-            long totalBytes = virtualCell.getTier().getTotalBytes();
-            if (mouseX >= barX && mouseX <= barX + barW && mouseY >= barY && mouseY <= barY + barH) {
-                int relX = mouseX - barX;
-                int currentX = 0;
-                boolean hovered = false;
-                for (int i = 0; i < workingList.size(); i++) {
-                    PartitionDraft p = workingList.get(i);
-                    int sliceW = (int) Math.round((p.percent / 100.0) * barW);
-                    if (relX >= currentX && relX <= currentX + sliceW) {
-                        long allocBytes = (totalBytes * p.percent) / 100L;
-                        String targetName = (p.target != null) ? new ItemStack(p.target).getHoverName().getString() : "Unknown";
-                        List<Component> tooltip = List.of(
-                                Component.literal(targetName).withStyle(ChatFormatting.GREEN),
-                                Component.literal("Allocation: " + p.percent + "% (" + String.format("%,d", allocBytes) + " Bytes)").withStyle(ChatFormatting.AQUA),
-                                Component.literal(p.voidSecondary ? "◆ Void Secondary Outputs: Active" : "◇ Normal Secondary Outputs").withStyle(ChatFormatting.GRAY)
-                        );
-                        extractor.setComponentTooltipForNextFrame(font, tooltip, mouseX, mouseY);
-                        hovered = true;
-                        break;
-                    }
-                    currentX += sliceW;
-                }
-                if (!hovered && relX >= currentX) {
-                    long freeBytes = (totalBytes * getUnallocatedPercent()) / 100L;
+        if (mouseX >= barX && mouseX <= barX + barW && mouseY >= barY && mouseY <= barY + barH && hasCell) {
+            long totalBytes = VirtualCellAdapter.getCellTotalBytes(cell);
+            int relX = mouseX - barX;
+            int currentX = 0;
+            boolean hovered = false;
+
+            for (int i = 0; i < workingList.size(); i++) {
+                PartitionDraft p = workingList.get(i);
+                int sliceW = (int) Math.round((p.percent / 100.0) * barW);
+                if (relX >= currentX && relX < currentX + sliceW) {
+                    Component name = VirtualCellAdapter.getTargetDisplayName(p.targetId, p.isFluid);
+                    long allocated = (totalBytes * p.percent) / 100L;
                     List<Component> tooltip = List.of(
-                            Component.literal("Unallocated Space").withStyle(ChatFormatting.YELLOW),
-                            Component.literal("Free: " + getUnallocatedPercent() + "% (" + String.format("%,d", freeBytes) + " Bytes)").withStyle(ChatFormatting.GRAY),
-                            Component.literal("Saves AE power when idle").withStyle(ChatFormatting.DARK_GREEN)
+                            name.copy().withStyle(ChatFormatting.AQUA),
+                            Component.literal("Share: " + p.percent + "% (" + String.format("%,d", allocated) + " Bytes)").withStyle(ChatFormatting.GRAY),
+                            Component.literal(p.voidSecondary ? "Void Byproducts: Enabled" : "Void Byproducts: Disabled")
+                                    .withStyle(p.voidSecondary ? ChatFormatting.DARK_PURPLE : ChatFormatting.DARK_GRAY)
                     );
                     extractor.setComponentTooltipForNextFrame(font, tooltip, mouseX, mouseY);
+                    hovered = true;
+                    break;
                 }
+                currentX += sliceW;
+            }
+
+            if (!hovered && relX >= currentX) {
+                long freeBytes = (totalBytes * getUnallocatedPercent()) / 100L;
+                List<Component> tooltip = List.of(
+                        Component.literal("Unallocated Space").withStyle(ChatFormatting.YELLOW),
+                        Component.literal("Free: " + getUnallocatedPercent() + "% (" + String.format("%,d", freeBytes) + " Bytes)").withStyle(ChatFormatting.GRAY),
+                        Component.literal("Saves AE power when idle").withStyle(ChatFormatting.DARK_GREEN)
+                    );
+                extractor.setComponentTooltipForNextFrame(font, tooltip, mouseX, mouseY);
             }
         }
 
@@ -416,17 +417,20 @@ public class VirtualPartitionerScreen extends AbstractContainerScreen<VirtualPar
             int rowY = tableY + 14 + i * 20;
 
             if (mouseX >= tableX + 10 && mouseX <= tableX + 27 && mouseY >= rowY && mouseY <= rowY + 17) {
-                if (p.target != null) {
-                    List<Component> tooltip = new ArrayList<>(getTooltipFromContainerItem(new ItemStack(p.target)));
-                    tooltip.add(Component.literal("Drop seeds/sapling here or click to pick").withStyle(ChatFormatting.YELLOW));
+                if (p.targetId != null) {
+                    Component displayName = VirtualCellAdapter.getTargetDisplayName(p.targetId, p.isFluid);
+                    List<Component> tooltip = new ArrayList<>();
+                    tooltip.add(displayName.copy().withStyle(ChatFormatting.AQUA));
+                    tooltip.add(Component.literal("Drop item/fluid here or click to pick").withStyle(ChatFormatting.YELLOW));
                     extractor.setComponentTooltipForNextFrame(font, tooltip, mouseX, mouseY);
                 } else {
-                    extractor.setTooltipForNextFrame(font, Component.literal("Drop seeds/sapling here or click to pick from inventory"), mouseX, mouseY);
+                    extractor.setTooltipForNextFrame(font, Component.literal(isFluid ? "Drop a fluid/bucket here or click to pick" : "Drop an item here or click to pick"), mouseX, mouseY);
                 }
             }
+
             if (mouseX >= tableX + 138 && mouseX <= tableX + 164 && mouseY >= rowY + 3 && mouseY <= rowY + 14) {
-                if (hasVoidCard(menu.getSlot(0).getItem())) {
-                    extractor.setTooltipForNextFrame(font, Component.literal("Toggle voiding byproduct crops (Sticks, Saplings, etc.)"), mouseX, mouseY);
+                if (hasVoidCard(cell)) {
+                    extractor.setTooltipForNextFrame(font, Component.literal("Toggle voiding byproduct outputs"), mouseX, mouseY);
                 } else {
                     extractor.setTooltipForNextFrame(font, Component.literal("Requires Void Secondary Card").withStyle(ChatFormatting.RED), mouseX, mouseY);
                 }
@@ -472,6 +476,7 @@ public class VirtualPartitionerScreen extends AbstractContainerScreen<VirtualPar
         return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
     }
 
+    @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean wasHandled) {
         int x = this.leftPos;
         int y = this.topPos;
@@ -479,18 +484,22 @@ public class VirtualPartitionerScreen extends AbstractContainerScreen<VirtualPar
         double mouseY = event.y();
 
         ItemStack cell = menu.getSlot(0).getItem();
-        boolean hasCell = !cell.isEmpty() && cell.getItem() instanceof VirtualGardenCellItem;
+        boolean hasCell = !cell.isEmpty() && VirtualCellAdapter.isVirtualStorageCell(cell);
+        boolean isFluid = hasCell && VirtualCellAdapter.isFluidCell(cell);
 
+        // Action Buttons Row
         int btnY = y + 137;
         if (mouseY >= btnY && mouseY <= btnY + 14) {
+            // [+ Add]
             if (mouseX >= x + 12 && mouseX <= x + 48 && hasCell && workingList.size() < 6 && getUnallocatedPercent() > 0) {
                 playClickSound();
-                Item target = findFirstUnusedInventoryTarget();
+                Identifier targetId = findFirstUnusedInventoryTarget(cell, isFluid);
                 int pct = Math.min(20, Math.max(5, getUnallocatedPercent()));
-                workingList.add(new PartitionDraft(target, pct, false));
+                workingList.add(new PartitionDraft(targetId, isFluid, pct, false));
                 dirty = true;
                 return true;
             }
+            // [Equalize]
             if (mouseX >= x + 51 && mouseX <= x + 95 && hasCell && !workingList.isEmpty()) {
                 playClickSound();
                 int count = workingList.size();
@@ -502,6 +511,7 @@ public class VirtualPartitionerScreen extends AbstractContainerScreen<VirtualPar
                 dirty = true;
                 return true;
             }
+            // [Clear]
             if (mouseX >= x + 98 && mouseX <= x + 134 && hasCell && !workingList.isEmpty()) {
                 playClickSound();
                 workingList.clear();
@@ -509,6 +519,7 @@ public class VirtualPartitionerScreen extends AbstractContainerScreen<VirtualPar
                 dirty = true;
                 return true;
             }
+            // [Apply & Format]
             if (mouseX >= x + 138 && mouseX <= x + 208 && hasCell) {
                 playClickSound();
                 applyPartitionsToServer();
@@ -516,22 +527,40 @@ public class VirtualPartitionerScreen extends AbstractContainerScreen<VirtualPar
             }
         }
 
+        // Table Rows interaction
         int tableX = x + 12;
         int tableY = y + 58;
         int maxVisible = 3;
         for (int i = 0; i < maxVisible; i++) {
             int index = scrollOffset + i;
             if (index >= workingList.size()) break;
+
             PartitionDraft p = workingList.get(index);
             int rowY = tableY + 14 + i * 20;
 
             if (mouseX >= tableX + 10 && mouseX <= tableX + 27 && mouseY >= rowY && mouseY <= rowY + 17) {
                 ItemStack carried = menu.getCarried();
                 if (!carried.isEmpty()) {
-                    Item carriedItem = carried.getItem();
-                    if (GardenDropRegistry.isValidSeed(carriedItem, minecraft != null ? minecraft.level : null)) {
+                    Identifier pickedId = null;
+                    if (isFluid) {
+                        Fluid extracted = VirtualCellAdapter.extractFluidFromItem(carried);
+                        if (extracted != null) {
+                            Identifier fluidId = BuiltInRegistries.FLUID.getKey(extracted);
+                            if (VirtualCellAdapter.isValidTarget(cell, fluidId, minecraft != null ? minecraft.level : null)) {
+                                pickedId = fluidId;
+                            }
+                        }
+                    } else {
+                        Item item = carried.getItem();
+                        Identifier itemId = BuiltInRegistries.ITEM.getKey(item);
+                        if (VirtualCellAdapter.isValidTarget(cell, itemId, minecraft != null ? minecraft.level : null)) {
+                            pickedId = itemId;
+                        }
+                    }
+                    if (pickedId != null) {
                         playClickSound();
-                        p.target = carriedItem;
+                        p.targetId = pickedId;
+                        p.isFluid = isFluid;
                         selectedRowForPicker = -1;
                         dirty = true;
                         return true;
@@ -601,10 +630,26 @@ public class VirtualPartitionerScreen extends AbstractContainerScreen<VirtualPar
 
         Slot slot = getHoveredSlot();
         if (slot != null && slot.hasItem() && selectedRowForPicker >= 0 && selectedRowForPicker < workingList.size()) {
-            Item item = slot.getItem().getItem();
-            if (GardenDropRegistry.isValidSeed(item, minecraft != null ? minecraft.level : null)) {
+            Identifier pickedId = null;
+            if (isFluid) {
+                Fluid extracted = VirtualCellAdapter.extractFluidFromItem(slot.getItem());
+                if (extracted != null) {
+                    Identifier fluidId = BuiltInRegistries.FLUID.getKey(extracted);
+                    if (VirtualCellAdapter.isValidTarget(cell, fluidId, minecraft != null ? minecraft.level : null)) {
+                        pickedId = fluidId;
+                    }
+                }
+            } else {
+                Item item = slot.getItem().getItem();
+                Identifier itemId = BuiltInRegistries.ITEM.getKey(item);
+                if (VirtualCellAdapter.isValidTarget(cell, itemId, minecraft != null ? minecraft.level : null)) {
+                    pickedId = itemId;
+                }
+            }
+            if (pickedId != null) {
                 playClickSound();
-                workingList.get(selectedRowForPicker).target = item;
+                workingList.get(selectedRowForPicker).targetId = pickedId;
+                workingList.get(selectedRowForPicker).isFluid = isFluid;
                 selectedRowForPicker = -1;
                 dirty = true;
                 return true;
@@ -615,29 +660,43 @@ public class VirtualPartitionerScreen extends AbstractContainerScreen<VirtualPar
     }
 
     private boolean hasVoidCard(ItemStack cell) {
-        if (cell.isEmpty()) return false;
-        if (menu.getSlot(5).hasItem()) return true;
-        var upgrades = UpgradeInventories.forItem(cell, 5);
-        return upgrades != null && (upgrades.isInstalled(ModItems.VOID_SECONDARY_CARD.get())
-                || upgrades.isInstalled(AEItems.VOID_CARD.asItem()));
+        return VirtualCellAdapter.hasVoidCardInstalled(menu.upgradeContainer, cell);
     }
 
-    private Item findFirstUnusedInventoryTarget() {
+    private Identifier findFirstUnusedInventoryTarget(ItemStack cell, boolean isFluid) {
         if (minecraft != null && minecraft.player != null) {
             Inventory inv = minecraft.player.getInventory();
             for (int i = 0; i < inv.getContainerSize(); i++) {
                 ItemStack stack = inv.getItem(i);
                 if (!stack.isEmpty()) {
-                    Item item = stack.getItem();
-                    if (GardenDropRegistry.isValidSeed(item, minecraft.level)) {
-                        boolean used = false;
-                        for (PartitionDraft p : workingList) {
-                            if (p.target == item) {
-                                used = true;
-                                break;
+                    if (isFluid) {
+                        Fluid extracted = VirtualCellAdapter.extractFluidFromItem(stack);
+                        if (extracted != null) {
+                            Identifier fluidId = BuiltInRegistries.FLUID.getKey(extracted);
+                            if (VirtualCellAdapter.isValidTarget(cell, fluidId, minecraft.level)) {
+                                boolean used = false;
+                                for (PartitionDraft p : workingList) {
+                                    if (fluidId.equals(p.targetId)) {
+                                        used = true;
+                                        break;
+                                    }
+                                }
+                                if (!used) return fluidId;
                             }
                         }
-                        if (!used) return item;
+                    } else {
+                        Item item = stack.getItem();
+                        Identifier itemId = BuiltInRegistries.ITEM.getKey(item);
+                        if (VirtualCellAdapter.isValidTarget(cell, itemId, minecraft.level)) {
+                            boolean used = false;
+                            for (PartitionDraft p : workingList) {
+                                if (itemId.equals(p.targetId)) {
+                                    used = true;
+                                    break;
+                                }
+                            }
+                            if (!used) return itemId;
+                        }
                     }
                 }
             }
@@ -646,13 +705,13 @@ public class VirtualPartitionerScreen extends AbstractContainerScreen<VirtualPar
     }
 
     private void applyPartitionsToServer() {
-        List<GardenCellPartition> partitions = new ArrayList<>();
+        List<UniversalPartition> partitions = new ArrayList<>();
         for (PartitionDraft draft : workingList) {
-            if (draft.target != null && draft.percent > 0) {
-                partitions.add(new GardenCellPartition(draft.target, draft.percent, draft.voidSecondary));
+            if (draft.targetId != null && draft.percent > 0) {
+                partitions.add(new UniversalPartition(draft.targetId, draft.isFluid, draft.percent, draft.voidSecondary));
             }
         }
-        ClientPacketDistributor.sendToServer(new SetPartitionsPayload(new GardenCellPartitionList(partitions)));
+        ClientPacketDistributor.sendToServer(new SetPartitionsPayload(partitions));
         dirty = false;
     }
 
