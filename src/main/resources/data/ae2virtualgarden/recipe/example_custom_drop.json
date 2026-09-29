@@ -1,8 +1,6 @@
 {
   "type": "ae2virtualgarden:garden_drop",
-  "seed": {
-    "item": "minecraft:golden_apple"
-  },
+  "seed": "minecraft:golden_apple",
   "min_tier": 4,
   "drops": [
     {
