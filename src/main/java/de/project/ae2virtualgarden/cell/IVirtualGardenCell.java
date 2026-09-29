@@ -33,7 +33,7 @@ public interface IVirtualGardenCell extends StorageCell {
         }
         Item single = getConfiguredSeedOrSapling();
         if (single != null) {
-            return new GardenCellPartitionList(List.of(new GardenCellPartition(single, 100, false)));
+            return new GardenCellPartitionList(List.of(new GardenCellPartition(single, 100, true)));
         }
         return GardenCellPartitionList.EMPTY;
     }
