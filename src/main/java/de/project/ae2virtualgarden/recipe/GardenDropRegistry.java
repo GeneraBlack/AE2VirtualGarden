@@ -58,9 +58,15 @@ public class GardenDropRegistry {
         return RECIPE_CACHE.get(seed);
     }
 
-    static {
+    private static volatile boolean initialized = false;
+
+    public static void ensureInitialized() {
+        if (!initialized) {
+            initialized = true;
         registerTreeDefaults();
         registerCropDefaults();
+    
+        }
     }
 
     private static void registerTreeDefaults() {
@@ -249,6 +255,7 @@ public class GardenDropRegistry {
     }
 
     public static boolean isValidSeed(Item item, @Nullable Level level) {
+        ensureInitialized();
         if (item == null || item.equals(Items.AIR)) {
             return false;
         }
@@ -292,10 +299,12 @@ public class GardenDropRegistry {
     }
 
     public static List<GardenDropEntry> getDropEntries(Item seed, Level level) {
+        ensureInitialized();
         return getDropEntries(seed, level, null);
     }
 
     public static List<GardenDropEntry> getDropEntries(Item seed, @Nullable Level level, @Nullable GardenCellTier tier) {
+        ensureInitialized();
         if (seed == null || seed.equals(Items.AIR)) {
             return Collections.emptyList();
         }

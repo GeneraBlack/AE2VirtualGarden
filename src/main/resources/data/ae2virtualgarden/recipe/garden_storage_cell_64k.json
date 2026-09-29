@@ -1,15 +1,8 @@
 {
-  "type": "minecraft:crafting_shapeless",
-  "ingredients": [
-    {
-      "item": "ae2virtualgarden:garden_cell_housing"
-    },
-    {
-      "item": "ae2virtualgarden:garden_cell_component_64k"
-    }
-  ],
-  "result": {
-    "id": "ae2virtualgarden:garden_storage_cell_64k",
-    "count": 1
-  }
+    "type": "minecraft:crafting_shapeless",
+    "ingredients": [
+        "ae2virtualgarden:garden_cell_housing",
+        "ae2virtualgarden:garden_cell_component_64k"
+    ],
+    "result": "ae2virtualgarden:garden_storage_cell_64k"
 }

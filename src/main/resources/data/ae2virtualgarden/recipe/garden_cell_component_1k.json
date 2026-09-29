@@ -1,18 +1,9 @@
 {
-  "type": "minecraft:crafting_shapeless",
-  "ingredients": [
-    {
-      "item": "ae2:cell_component_1k"
-    },
-    {
-      "item": "minecraft:bone_meal"
-    },
-    {
-      "item": "minecraft:wheat_seeds"
-    }
-  ],
-  "result": {
-    "id": "ae2virtualgarden:garden_cell_component_1k",
-    "count": 1
-  }
+    "type": "minecraft:crafting_shapeless",
+    "ingredients": [
+        "ae2:cell_component_1k",
+        "minecraft:bone_meal",
+        "minecraft:wheat_seeds"
+    ],
+    "result": "ae2virtualgarden:garden_cell_component_1k"
 }

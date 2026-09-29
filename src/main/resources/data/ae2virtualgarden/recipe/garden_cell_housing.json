@@ -1,26 +1,17 @@
 {
-  "type": "minecraft:crafting_shaped",
-  "pattern": [
-    "GRG",
-    "RSR",
-    "III"
-  ],
-  "key": {
-    "G": {
-      "item": "ae2:quartz_glass"
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        "GRG",
+        "RSR",
+        "III"
+    ],
+    "key": {
+        "G": "ae2:quartz_glass",
+        "R": "minecraft:redstone",
+        "S": {
+            "tag": "minecraft:saplings"
+        },
+        "I": "minecraft:iron_ingot"
     },
-    "R": {
-      "item": "minecraft:redstone"
-    },
-    "S": {
-      "tag": "minecraft:saplings"
-    },
-    "I": {
-      "item": "minecraft:iron_ingot"
-    }
-  },
-  "result": {
-    "id": "ae2virtualgarden:garden_cell_housing",
-    "count": 1
-  }
+    "result": "ae2virtualgarden:garden_cell_housing"
 }

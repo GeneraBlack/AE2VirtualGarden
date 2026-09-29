@@ -55,6 +55,7 @@ public class AE2VirtualGarden {
 
         // Refresh recipe cache and clear dynamic cache when tags/datapacks update
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.TagsUpdatedEvent event) -> {
+            de.project.ae2virtualgarden.recipe.GardenDropRegistry.ensureInitialized();
             de.project.ae2virtualgarden.recipe.GardenDropRegistry.clearCache();
             var server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
             if (server != null) {
