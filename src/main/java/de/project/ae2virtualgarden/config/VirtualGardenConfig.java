@@ -35,7 +35,7 @@ public class VirtualGardenConfig {
                 .defineInRange("energyPerDrop", 10.0, 0.0, 100000.0);
 
         ENABLE_DYNAMIC_FALLBACK = builder
-                .comment("Whether to automatically discover drops for unknown mod crops, saplings, and mushrooms matching plant tags/classes. If false, only built-in drops and registered datapack recipes are allowed.")
+                .comment("Whether to automatically discover drops for unknown mod crops, saplings, flowers, and mushrooms matching plant tags/classes. If false, only built-in drops and registered datapack recipes are allowed.")
                 .define("enableDynamicFallback", true);
 
         ENFORCE_INVENTORY_CHECK = builder
