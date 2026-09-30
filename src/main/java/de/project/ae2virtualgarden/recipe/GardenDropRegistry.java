@@ -20,7 +20,9 @@ import net.minecraft.world.item.crafting.SingleRecipeInput;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.CropBlock;
+import net.minecraft.world.level.block.FlowerBlock;
 import net.minecraft.world.level.block.SaplingBlock;
+import net.minecraft.world.level.block.TallFlowerBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +34,7 @@ public class GardenDropRegistry {
     public static final TagKey<Item> SEEDS_TAG = TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("c", "seeds"));
     public static final TagKey<Item> SAPLINGS_TAG = TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("c", "saplings"));
     public static final TagKey<Item> MUSHROOMS_TAG = TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("c", "mushrooms"));
+    public static final TagKey<Item> FLOWERS_TAG = TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("c", "flowers"));
 
     private static final Map<Item, List<GardenDropEntry>> BUILTIN_DROPS = new HashMap<>();
     private static final Map<Item, List<GardenDropEntry>> DYNAMIC_CACHE = new HashMap<>();
@@ -61,6 +64,7 @@ public class GardenDropRegistry {
     static {
         registerTreeDefaults();
         registerCropDefaults();
+        registerFlowerDefaults();
     }
 
     private static void registerTreeDefaults() {
@@ -244,6 +248,41 @@ public class GardenDropRegistry {
         ));
     }
 
+    private static void registerFlowerDefaults() {
+        // Small Flowers
+        addBuiltin(Items.DANDELION, List.of(new GardenDropEntry(new ItemStack(Items.DANDELION), 100, 1, 2)));
+        addBuiltin(Items.POPPY, List.of(new GardenDropEntry(new ItemStack(Items.POPPY), 100, 1, 2)));
+        addBuiltin(Items.BLUE_ORCHID, List.of(new GardenDropEntry(new ItemStack(Items.BLUE_ORCHID), 100, 1, 2)));
+        addBuiltin(Items.ALLIUM, List.of(new GardenDropEntry(new ItemStack(Items.ALLIUM), 100, 1, 2)));
+        addBuiltin(Items.AZURE_BLUET, List.of(new GardenDropEntry(new ItemStack(Items.AZURE_BLUET), 100, 1, 2)));
+        addBuiltin(Items.RED_TULIP, List.of(new GardenDropEntry(new ItemStack(Items.RED_TULIP), 100, 1, 2)));
+        addBuiltin(Items.ORANGE_TULIP, List.of(new GardenDropEntry(new ItemStack(Items.ORANGE_TULIP), 100, 1, 2)));
+        addBuiltin(Items.WHITE_TULIP, List.of(new GardenDropEntry(new ItemStack(Items.WHITE_TULIP), 100, 1, 2)));
+        addBuiltin(Items.PINK_TULIP, List.of(new GardenDropEntry(new ItemStack(Items.PINK_TULIP), 100, 1, 2)));
+        addBuiltin(Items.OXEYE_DAISY, List.of(new GardenDropEntry(new ItemStack(Items.OXEYE_DAISY), 100, 1, 2)));
+        addBuiltin(Items.CORNFLOWER, List.of(new GardenDropEntry(new ItemStack(Items.CORNFLOWER), 100, 1, 2)));
+        addBuiltin(Items.LILY_OF_THE_VALLEY, List.of(new GardenDropEntry(new ItemStack(Items.LILY_OF_THE_VALLEY), 100, 1, 2)));
+        addBuiltin(Items.WITHER_ROSE, List.of(new GardenDropEntry(new ItemStack(Items.WITHER_ROSE), 100, 1, 1)));
+        addBuiltin(Items.TORCHFLOWER, List.of(
+                new GardenDropEntry(new ItemStack(Items.TORCHFLOWER), 70, 1, 1),
+                new GardenDropEntry(new ItemStack(Items.TORCHFLOWER_SEEDS), 30, 1, 1)
+        ));
+
+        // Tall Flowers
+        addBuiltin(Items.SUNFLOWER, List.of(new GardenDropEntry(new ItemStack(Items.SUNFLOWER), 100, 1, 2)));
+        addBuiltin(Items.LILAC, List.of(new GardenDropEntry(new ItemStack(Items.LILAC), 100, 1, 2)));
+        addBuiltin(Items.ROSE_BUSH, List.of(new GardenDropEntry(new ItemStack(Items.ROSE_BUSH), 100, 1, 2)));
+        addBuiltin(Items.PEONY, List.of(new GardenDropEntry(new ItemStack(Items.PEONY), 100, 1, 2)));
+        addBuiltin(Items.PITCHER_PLANT, List.of(
+                new GardenDropEntry(new ItemStack(Items.PITCHER_PLANT), 70, 1, 1),
+                new GardenDropEntry(new ItemStack(Items.PITCHER_POD), 30, 1, 1)
+        ));
+
+        // Other Floral / Botany
+        addBuiltin(Items.PINK_PETALS, List.of(new GardenDropEntry(new ItemStack(Items.PINK_PETALS), 100, 1, 3)));
+        addBuiltin(Items.SPORE_BLOSSOM, List.of(new GardenDropEntry(new ItemStack(Items.SPORE_BLOSSOM), 100, 1, 1)));
+    }
+
     private static void addBuiltin(Item seed, List<GardenDropEntry> drops) {
         BUILTIN_DROPS.put(seed, drops);
     }
@@ -264,6 +303,8 @@ public class GardenDropRegistry {
             if (level.getRecipeManager().getRecipeFor(ModRecipes.GARDEN_DROP_TYPE.get(), input, level).isPresent()) {
                 return true;
             }
+        } else if (getCachedRecipe(item) != null) {
+            return true;
         }
 
         // 3. If dynamic fallback is disabled, only built-in drops and custom datapack recipes are valid
@@ -273,22 +314,24 @@ public class GardenDropRegistry {
 
         // 4. Conventional Tags check
         ItemStack stack = new ItemStack(item);
-        if (stack.is(CROPS_TAG) || stack.is(SEEDS_TAG) || stack.is(SAPLINGS_TAG) || stack.is(ItemTags.SAPLINGS) || stack.is(MUSHROOMS_TAG)) {
+        if (stack.is(CROPS_TAG) || stack.is(SEEDS_TAG) || stack.is(SAPLINGS_TAG) || stack.is(ItemTags.SAPLINGS)
+                || stack.is(MUSHROOMS_TAG) || stack.is(FLOWERS_TAG) || stack.is(ItemTags.FLOWERS)) {
             return true;
         }
 
-        // 5. Block classes (strictly CropBlock or SaplingBlock, NO loose BonemealableBlock!)
+        // 5. Block classes (strictly CropBlock, SaplingBlock, FlowerBlock, or TallFlowerBlock)
         if (item instanceof BlockItem blockItem) {
             Block block = blockItem.getBlock();
-            if (block instanceof CropBlock || block instanceof SaplingBlock) {
+            if (block instanceof CropBlock || block instanceof SaplingBlock || block instanceof FlowerBlock
+                    || block instanceof TallFlowerBlock) {
                 return true;
             }
         }
 
-        // 6. Seed/sapling naming convention
+        // 6. Seed/sapling/flower naming convention
         ResourceLocation id = BuiltInRegistries.ITEM.getKey(item);
         String path = id.getPath();
-        return path.endsWith("_seeds") || path.endsWith("_seed") || path.endsWith("_sapling");
+        return path.endsWith("_seeds") || path.endsWith("_seed") || path.endsWith("_sapling") || path.endsWith("_flower");
     }
 
     public static List<GardenDropEntry> getDropEntries(Item seed, Level level) {
@@ -406,9 +449,33 @@ public class GardenDropRegistry {
                     return entries;
                 }
             }
+
+            // 3. Flower Block (FlowerBlock, TallFlowerBlock, or tagged flowers)
+            if (block instanceof FlowerBlock || block instanceof TallFlowerBlock
+                    || stack.is(ItemTags.FLOWERS) || stack.is(FLOWERS_TAG)) {
+                List<ItemStack> simulatedDrops = Block.getDrops(block.defaultBlockState(), serverLevel, BlockPos.ZERO, null);
+                if (simulatedDrops != null && !simulatedDrops.isEmpty()) {
+                    for (ItemStack drop : simulatedDrops) {
+                        if (drop.isEmpty()) continue;
+                        entries.add(new GardenDropEntry(drop.copy(), 100, 1, Math.max(2, drop.getCount())));
+                    }
+                    if (!entries.isEmpty()) {
+                        return entries;
+                    }
+                }
+                entries.add(new GardenDropEntry(new ItemStack(seed), 100, 1, 2));
+                return entries;
+            }
         }
 
-        // 4. Modded seed without BlockItem: pattern match name (e.g. mod:cotton_seeds -> mod:cotton)
+        // 4. Floral items without BlockItem or tagged flower items
+        ItemStack stack = new ItemStack(seed);
+        if (stack.is(ItemTags.FLOWERS) || stack.is(FLOWERS_TAG)) {
+            entries.add(new GardenDropEntry(new ItemStack(seed), 100, 1, 2));
+            return entries;
+        }
+
+        // 5. Modded seed without BlockItem: pattern match name (e.g. mod:cotton_seeds -> mod:cotton)
         ResourceLocation id = BuiltInRegistries.ITEM.getKey(seed);
         String path = id.getPath();
         if (path.endsWith("_seeds") || path.endsWith("_seed")) {
@@ -420,6 +487,11 @@ public class GardenDropRegistry {
                 entries.add(new GardenDropEntry(new ItemStack(seed), 35, 1, 2));
                 return entries;
             }
+        }
+
+        if (path.endsWith("_flower")) {
+            entries.add(new GardenDropEntry(new ItemStack(seed), 100, 1, 2));
+            return entries;
         }
 
         return entries;

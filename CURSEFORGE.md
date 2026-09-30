@@ -28,11 +28,13 @@ Simply partition a Garden Cell with any sapling, seed, or crop, insert it into a
   * Items will **never** overflow into other drives or storage cells in your ME network!
 * ⚡ **Zero Energy Waste:** If a cell is full, it consumes **zero AE energy** for drops until items are extracted from the cell.
 * 🌲 **Full Vanilla Support (Out of the Box):**
-  * **All 12 Trees & Fungi:** Oak (logs, saplings, apples, sticks), Spruce, Birch, Jungle (logs, cocoa beans), Acacia, Dark Oak, Mangrove (roots, propagules), Cherry, Bamboo, Crimson Fungus, Warped Fungus, and Chorus Flowers.
-  * **All 17 Crops & Flora:** Wheat, Carrots, Potatoes (rare poison potato), Beetroot, Melons, Pumpkins, Nether Wart, Sugar Cane, Cactus, Kelp, Sweet Berries, Glow Berries, Cocoa Beans, Torchflowers, Pitcher Plants, Red and Brown Mushrooms.
-* 🔍 **Automatic Modded Crop & Sapling Detection:**
+  * **All Trees & Fungi:** Oak (logs, saplings, apples, sticks), Spruce, Birch, Jungle (logs, cocoa beans), Acacia, Dark Oak, Mangrove (roots, propagules), Cherry, Bamboo, Crimson Fungus, Warped Fungus, and Chorus Flowers.
+  * **All Crops & Flora:** Wheat, Carrots, Potatoes (rare poison potato), Beetroot, Melons, Pumpkins, Nether Wart, Sugar Cane, Cactus, Kelp, Sweet Berries, Glow Berries, Cocoa Beans, Torchflowers, Pitcher Plants, Red and Brown Mushrooms.
+  * **All Vanilla Flowers:** Poppies, Dandelions, Allium, Tulips, Cornflowers, Lilies of the Valley, Sunflowers, Lilacs, Rose Bushes, Peonies, Wither Roses, Pink Petals, Spore Blossoms, and more!
+* 🔍 **Automatic Modded Crop, Sapling & Flower Detection:**
   * Automatically detects modded crops (`CropBlock`), discovering their mature drops via block loot tables.
   * Automatically detects modded saplings and pairs them with their mod's wood logs, stems, and leaves.
+  * Automatically detects modded flowers (`FlowerBlock`, `TallFlowerBlock`, `#c:flowers`).
   * Works seamlessly with mods like *Farmer's Delight*, *Mystical Agriculture*, *Biomes O' Plenty*, and more!
 * 🛠️ **Two Easy Configuration Methods:**
   * **AE2 Cell Workbench:** Configure the seed/sapling in the workbench filter.

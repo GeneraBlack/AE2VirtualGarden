@@ -30,8 +30,8 @@ Insert a configured Garden Cell into any standard **ME Drive** or **ME Chest**, 
   - When the cell reaches full capacity (`CellState.FULL` or byte/type limits), production completely halts.
   - No drops ever spill over into other cells in your ME network!
 - 🔋 **Zero Power Waste on Overflow:** When a cell is full, zero AE power is drained for unproduced drops.
-- 🌲 **12 Vanilla Trees & 17 Crops Out of the Box:** Full drop tables for all oak, birch, spruce, jungle, dark oak, acacia, mangrove, cherry, bamboo, crimson/warped fungus, chorus, wheat, carrots, potatoes, melon, pumpkin, nether wart, sugar cane, cactus, kelp, berries, mushrooms, and more!
-- 🔍 **Automated Modded Crop & Sapling Discovery:** Automatically detects any modded `CropBlock` (e.g., Farmer's Delight, Mystical Agriculture) and saplings, discovering their harvest drops and corresponding wood logs/stems without requiring manual configuration.
+- 🌲 **Vanilla Trees, Crops & Flowers Out of the Box:** Full drop tables for all oak, birch, spruce, jungle, dark oak, acacia, mangrove, cherry, bamboo, crimson/warped fungus, chorus, crops, mushrooms, and all small & tall flowers (Poppies, Dandelions, Tulips, Sunflowers, Lilacs, Rose Bushes, Peonies, Wither Roses, Pink Petals, and more)!
+- 🔍 **Automated Modded Crop, Sapling & Flower Discovery:** Automatically detects any modded `CropBlock` (e.g., Farmer's Delight, Mystical Agriculture), saplings, and flowers (`FlowerBlock`, `TallFlowerBlock`, `#c:flowers`), discovering their drops without requiring manual configuration.
 - 📋 **Datapack Extensible:** Create or customize drop recipes via standard JSON datapacks using recipe type `ae2virtualgarden:garden_drop`.
 - 🛠️ **Two Configuration Methods:**
   - **Cell Workbench (AE2 native):** Put the cell in a Cell Workbench and configure the filter slot with your seed or sapling.
